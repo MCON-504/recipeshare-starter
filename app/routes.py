@@ -1,10 +1,14 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, Flask, jsonify, request
 from flask_login import login_required, current_user
+from .models import User
 
 from .extensions import db
 from .models import Recipe
 
+app = Flask(__name__)
 main_bp = Blueprint("main_bp", __name__)
+
+
 
 
 @main_bp.route("/")
