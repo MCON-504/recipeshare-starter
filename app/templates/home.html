@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="home-hero">
+    <h1>Discover & Share Recipes</h1>
+    <p class="muted">A community cookbook — browse recipes or <a href="{{ url_for('auth.register') }}">create an account</a> to add your own.</p>
+</section>
+
+<section class="recipe-list">
+    <h2>All Recipes</h2>
+
+    {% if recipes %}
+    <div class="recipe-grid">
+        {% for recipe in recipes %}
+        <div class="recipe-card">
+            <h3>{{ recipe.title }}</h3>
+            <p class="recipe-desc">{{ recipe.description }}</p>
+            <span class="recipe-meta">⏱ {{ recipe.prep_time }} min prep</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="empty-state">No recipes yet — be the first to add one!</p>
+    {% endif %}
+</section>
+
+<style>
+    .home-hero { padding: 2.5rem 0 2rem; }
+    .home-hero h1 { font-size: 2rem; font-weight: 800; margin-bottom: .5rem; }
+    .home-hero .muted a { color: var(--brand); text-decoration: none; font-weight: 600; }
+    .home-hero .muted a:hover { text-decoration: underline; }
+
+    .recipe-list h2 { font-size: 1.3rem; font-weight: 700; margin-bottom: 1.25rem; color: var(--text); }
+
+    .recipe-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.25rem;
+    }
+    .recipe-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.25rem 1.5rem;
+        box-shadow: var(--shadow);
+        transition: box-shadow .15s, transform .15s;
+    }
+    .recipe-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,.1); transform: translateY(-2px); }
+    .recipe-card h3 { font-size: 1.05rem; margin-bottom: .4rem; }
+    .recipe-desc { font-size: .88rem; color: var(--muted); margin-bottom: .75rem; }
+    .recipe-meta { font-size: .8rem; color: var(--brand); font-weight: 600; }
+    .empty-state { color: var(--muted); font-size: .95rem; padding: 2rem 0; }
+</style>
+{% endblock %}

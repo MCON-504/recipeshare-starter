@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask Forms — Registration and Login Pages</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Fraunces:ital,wght@0,300;0,600;0,800;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:        #0d1117;
+            --surface:   #161b22;
+            --surface2:  #1f2733;
+            --border:    #30363d;
+            --text:      #e6edf3;
+            --muted:     #8b949e;
+            --accent:    #f0883e;
+            --accent2:   #58a6ff;
+            --accent3:   #3fb950;
+            --danger:    #ff7b72;
+            --tag-bg:    rgba(240,136,62,.15);
+            --tag-border:rgba(240,136,62,.35);
+            --code-bg:   #0d1117;
+            --inline-code:#161b22;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 300;
+            line-height: 1.75;
+            font-size: 16px;
+        }
+
+        header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            height: 56px;
+        }
+        .breadcrumb {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .75rem;
+            color: var(--muted);
+            letter-spacing: .04em;
+        }
+        .breadcrumb span { color: var(--accent); }
+        .lesson-badge {
+            margin-left: auto;
+            background: var(--tag-bg);
+            border: 1px solid var(--tag-border);
+            color: var(--accent);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .7rem;
+            padding: .2rem .65rem;
+            border-radius: 2rem;
+            letter-spacing: .06em;
+        }
+
+        .hero {
+            padding: 5rem 2rem 3.5rem;
+            max-width: 920px;
+            margin: 0 auto;
+            animation: fadeUp .6s ease both;
+        }
+        .hero-eyebrow {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .75rem;
+            color: var(--accent);
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+        .hero h1 {
+            font-family: 'Fraunces', serif;
+            font-size: clamp(2.2rem, 5vw, 3.5rem);
+            font-weight: 800;
+            line-height: 1.1;
+            color: var(--text);
+            margin-bottom: 1.25rem;
+        }
+        .hero h1 em { font-style: italic; color: var(--accent); }
+        .hero-sub {
+            font-size: 1.05rem;
+            color: var(--muted);
+            max-width: 690px;
+            margin-bottom: 2rem;
+        }
+        .objectives-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: .75rem;
+            margin-top: 1.5rem;
+        }
+        .obj-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: .9rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: .65rem;
+            font-size: .87rem;
+            transition: border-color .2s;
+        }
+        .obj-card:hover { border-color: var(--accent); }
+        .obj-icon { font-size: 1.1rem; flex-shrink: 0; }
+        .obj-card > :not(.obj-icon) { flex: 1; }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 230px 1fr;
+            max-width: 1160px;
+            margin: 0 auto;
+            gap: 0;
+            padding: 0 2rem 4rem;
+            align-items: start;
+        }
+        .toc {
+            position: sticky;
+            top: 72px;
+            padding: 1.5rem 1.5rem 1.5rem 0;
+        }
+        .toc-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .68rem;
+            color: var(--muted);
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            margin-bottom: .75rem;
+        }
+        .toc ol { list-style: none; counter-reset: toc; }
+        .toc li { counter-increment: toc; margin-bottom: .15rem; }
+        .toc a {
+            font-size: .82rem;
+            color: var(--muted);
+            text-decoration: none;
+            display: flex;
+            gap: .5rem;
+            align-items: baseline;
+            padding: .25rem .4rem;
+            border-radius: 4px;
+            transition: color .15s, background .15s;
+        }
+        .toc a::before {
+            content: counter(toc, decimal-leading-zero);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .65rem;
+            color: var(--accent);
+            opacity: .6;
+            flex-shrink: 0;
+        }
+        .toc a:hover { color: var(--text); background: var(--surface); }
+
+        .content { padding: 1.5rem 0; min-width: 0; }
+        section { margin-bottom: 3.5rem; animation: fadeUp .5s ease both; }
+        .section-header { display: flex; align-items: center; gap: .75rem; margin-bottom: 1.5rem; }
+        .section-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .7rem;
+            color: var(--accent);
+            background: var(--tag-bg);
+            border: 1px solid var(--tag-border);
+            border-radius: 4px;
+            padding: .15rem .4rem;
+            flex-shrink: 0;
+        }
+        h2 { font-family: 'Fraunces', serif; font-size: 1.6rem; font-weight: 600; color: var(--text); }
+        h3 { font-family: 'Fraunces', serif; font-size: 1.15rem; font-weight: 600; color: var(--text); margin: 2rem 0 .75rem; }
+        p { margin-bottom: 1rem; color: #c9d1d9; }
+        a { color: var(--accent2); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        strong { font-weight: 500; color: var(--text); }
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .82em;
+            background: var(--inline-code);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: .1em .35em;
+            color: var(--accent);
+        }
+
+        .code-block {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 1.25rem 0;
+            font-size: .84rem;
+        }
+        .code-header {
+            background: var(--surface2);
+            border-bottom: 1px solid var(--border);
+            padding: .5rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+        .code-filename {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .72rem;
+            color: var(--muted);
+            flex: 1;
+        }
+        .code-lang {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .65rem;
+            color: var(--accent);
+            background: var(--tag-bg);
+            border: 1px solid var(--tag-border);
+            border-radius: 3px;
+            padding: .1rem .35rem;
+        }
+        .code-dots { display: flex; gap: .35rem; }
+        .code-dots span { width: 10px; height: 10px; border-radius: 50%; background: var(--border); }
+        pre { padding: 1.25rem; overflow-x: auto; line-height: 1.65; }
+        pre code { background: none; border: none; padding: 0; font-size: inherit; color: var(--text); }
+
+        .kw  { color: #ff7b72; }
+        .fn  { color: #d2a8ff; }
+        .st  { color: #a5d6ff; }
+        .cm  { color: #6e7681; font-style: italic; }
+        .cl  { color: #ffa657; }
+        .nb  { color: #79c0ff; }
+
+        .callout {
+            border-left: 3px solid;
+            border-radius: 0 8px 8px 0;
+            padding: 1rem 1.25rem;
+            margin: 1.25rem 0;
+            font-size: .92rem;
+        }
+        .callout-info    { border-color: var(--accent2); background: rgba(88,166,255,.07); }
+        .callout-warning { border-color: var(--accent);  background: rgba(240,136,62,.07); }
+        .callout-success { border-color: var(--accent3); background: rgba(63,185,80,.07); }
+        .callout-danger  { border-color: var(--danger);  background: rgba(255,123,114,.07); }
+        .callout-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .72rem;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            margin-bottom: .4rem;
+            font-weight: 600;
+        }
+        .callout-info .callout-title { color: var(--accent2); }
+        .callout-warning .callout-title { color: var(--accent); }
+        .callout-success .callout-title { color: var(--accent3); }
+        .callout-danger .callout-title { color: var(--danger); }
+
+        .diagram-wrap {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 2rem 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+        }
+        .diagram-caption { text-align: center; font-size: .8rem; color: var(--muted); margin-top: .75rem; font-style: italic; }
+
+        .pkg-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin: 1.25rem 0;
+        }
+        .pkg-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.1rem 1.25rem;
+            transition: border-color .2s, transform .15s;
+        }
+        .pkg-card:hover { border-color: var(--accent2); transform: translateY(-2px); }
+        .pkg-name { font-family: 'JetBrains Mono', monospace; font-size: .85rem; color: var(--accent2); margin-bottom: .4rem; font-weight: 600; }
+        .pkg-desc { font-size: .85rem; color: var(--muted); }
+
+        .table-wrap { overflow-x: auto; margin: 1.25rem 0; }
+        table { width: 100%; border-collapse: collapse; font-size: .87rem; }
+        th {
+            background: var(--surface2);
+            color: var(--accent);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .72rem;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            padding: .65rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        td { padding: .65rem 1rem; border-bottom: 1px solid var(--border); color: #c9d1d9; vertical-align: top; }
+        tr:hover td { background: var(--surface); }
+        .badge {
+            display: inline-block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .65rem;
+            padding: .15rem .45rem;
+            border-radius: 3px;
+            font-weight: 600;
+            letter-spacing: .04em;
+        }
+        .badge-green  { background: rgba(63,185,80,.2);  color: #3fb950; border:1px solid rgba(63,185,80,.3); }
+        .badge-yellow { background: rgba(240,136,62,.2); color: #f0883e; border:1px solid rgba(240,136,62,.3); }
+        .badge-red    { background: rgba(255,123,114,.2);color: #ff7b72; border:1px solid rgba(255,123,114,.3); }
+
+        .step-list { list-style: none; counter-reset: steps; margin: 1.25rem 0; }
+        .step-list li { counter-increment: steps; display: flex; gap: 1rem; margin-bottom: 1rem; align-items: flex-start; color: #c9d1d9; }
+        .step-list li::before {
+            content: counter(steps);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .72rem;
+            font-weight: 600;
+            color: var(--bg);
+            background: var(--accent);
+            border-radius: 50%;
+            width: 22px; height: 22px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            margin-top: .2rem;
+        }
+        hr.section-div { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
+
+        details.expand {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin: 1.25rem 0;
+            overflow: hidden;
+            transition: border-color .2s;
+        }
+        details.expand[open] { border-color: var(--accent2); }
+        details.expand summary {
+            display: flex; align-items: center; gap: .65rem;
+            padding: .85rem 1.1rem;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .82rem;
+            color: var(--accent2);
+            font-weight: 600;
+            letter-spacing: .03em;
+            list-style: none;
+            user-select: none;
+        }
+        details.expand summary::-webkit-details-marker { display: none; }
+        details.expand summary::before { content: '▶'; font-size: .65rem; transition: transform .2s; color: var(--accent2); flex-shrink: 0; }
+        details.expand[open] summary::before { transform: rotate(90deg); }
+        details.expand summary:hover { background: var(--surface2); }
+        .expand-body { padding: 1.1rem 1.25rem; border-top: 1px solid var(--border); }
+
+        .browser-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 1.5rem 0;
+        }
+        .browser-top {
+            background: var(--surface2);
+            border-bottom: 1px solid var(--border);
+            padding: .65rem 1rem;
+            display: flex;
+            gap: .5rem;
+            align-items: center;
+        }
+        .browser-top span { width: 11px; height: 11px; border-radius: 50%; background: var(--border); }
+        .browser-url { margin-left: .5rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: .75rem; }
+        .mock-form { padding: 1.5rem; max-width: 430px; margin: 0 auto; }
+        .mock-form h3 { margin-top: 0; }
+        .mock-label { color: var(--muted); font-size: .82rem; font-family: 'JetBrains Mono', monospace; margin: .75rem 0 .25rem; }
+        .mock-input { border: 1px solid var(--border); background: var(--code-bg); border-radius: 6px; padding: .7rem .8rem; color: var(--text); }
+        .mock-button { margin-top: 1rem; background: var(--accent); color: var(--bg); border-radius: 6px; padding: .65rem .9rem; text-align: center; font-weight: 600; }
+
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+        @media (max-width: 720px) {
+            .layout { grid-template-columns: 1fr; padding: 0 1rem 3rem; }
+            .toc { display: none; }
+            .hero { padding: 3rem 1rem 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="breadcrumb">Flask &rsaquo; Recipe Share App &rsaquo; <span>Registration and Login Forms</span></div>
+    <div class="lesson-badge">LESSON 09</div>
+</header>
+
+<div class="hero">
+    <div class="hero-eyebrow">Flask — Forms + Authentication</div>
+    <h1>Building <em>Registration</em> and <em>Login</em> Pages with Flask Forms</h1>
+    <p class="hero-sub">
+        The application already supports authentication through JSON API endpoints at
+        <code>/auth/register</code>, <code>/auth/login</code>, and <code>/auth/logout</code>. In this lesson we
+        <strong>extend those same routes</strong> to also serve browser HTML forms, so both a REST API client
+        and a regular browser user can share the same URL &mdash; without breaking any existing behavior.
+    </p>
+    <div class="objectives-grid">
+        <div class="obj-card"><span class="obj-icon">🧾</span><span>Create Flask-WTF form classes for registration and login</span></div>
+        <div class="obj-card"><span class="obj-icon">🔐</span><span>Connect form submission to password hashing and verification</span></div>
+        <div class="obj-card"><span class="obj-icon">👤</span><span>Use Flask-Login to start and end browser sessions</span></div>
+        <div class="obj-card"><span class="obj-icon">🧱</span><span>Render form fields, CSRF tokens, validation errors, and flash messages</span></div>
+        <div class="obj-card"><span class="obj-icon">🔀</span><span>Use <code>request.is_json</code> to serve both API and form clients from one route</span></div>
+        <div class="obj-card"><span class="obj-icon">🛡️</span><span>Protect recipe creation and editing routes with <code>@login_required</code></span></div>
+        <div class="obj-card"><span class="obj-icon">🧪</span><span>Test the form-based authentication flow with Flask's test client</span></div>
+    </div>
+</div>
+
+<div class="layout">
+    <nav class="toc">
+        <div class="toc-title">Contents</div>
+        <ol>
+            <li><a href="#s1">Starting Point</a></li>
+            <li><a href="#s2">Serving Both Clients</a></li>
+            <li><a href="#s3">Install Packages</a></li>
+            <li><a href="#s4">Form Classes</a></li>
+            <li><a href="#s5">Registration Route</a></li>
+            <li><a href="#s6">Login Route</a></li>
+            <li><a href="#s7">Templates</a></li>
+            <li><a href="#s8">Sessions + Navbar</a></li>
+            <li><a href="#s9">Protected Routes</a></li>
+            <li><a href="#s10">Testing</a></li>
+            <li><a href="#s11">Checklist</a></li>
+        </ol>
+    </nav>
+
+    <main class="content">
+
+        <section id="s1">
+            <div class="section-header"><span class="section-num">01</span><h2>Starting Point: What We Already Have</h2></div>
+            <p>
+                The current Flask application already supports basic authentication through API endpoints. A client can send
+                credentials to the backend, the server can create a user, verify a password, and create an authenticated session.
+                That is a strong backend foundation, but browser users usually expect pages: a registration page, a login page,
+                visible error messages, and a navigation bar that changes when someone is logged in.
+            </p>
+            <p>
+                In this lesson, we are not adding email confirmation or a password reset flow. We are intentionally starting with
+                simple authentication: create an account, log in, log out, and restrict selected routes to authenticated users.
+                Once this foundation is working, more advanced security features can be layered on later.
+            </p>
+
+            <div class="diagram-wrap">
+                <svg viewBox="0 0 760 170" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:760px;display:block;margin:0 auto">
+                    <defs>
+                        <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#58a6ff"/></marker>
+                    </defs>
+                    <rect x="20" y="52" width="130" height="58" rx="8" fill="#1f2733" stroke="#30363d"/>
+                    <rect x="205" y="52" width="130" height="58" rx="8" fill="#1f2733" stroke="#30363d"/>
+                    <rect x="390" y="52" width="130" height="58" rx="8" fill="#1f2733" stroke="#30363d"/>
+                    <rect x="575" y="52" width="145" height="58" rx="8" fill="#1f2733" stroke="#f0883e" stroke-width="1.5"/>
+                    <text x="85" y="75" text-anchor="middle" fill="#c9d1d9" font-family="DM Sans,sans-serif" font-size="12">Browser page</text>
+                    <text x="85" y="92" text-anchor="middle" fill="#8b949e" font-family="DM Sans,sans-serif" font-size="11">HTML form</text>
+                    <text x="270" y="75" text-anchor="middle" fill="#c9d1d9" font-family="DM Sans,sans-serif" font-size="12">Flask route</text>
+                    <text x="270" y="92" text-anchor="middle" fill="#8b949e" font-family="DM Sans,sans-serif" font-size="11">GET or POST</text>
+                    <text x="455" y="75" text-anchor="middle" fill="#c9d1d9" font-family="DM Sans,sans-serif" font-size="12">Form object</text>
+                    <text x="455" y="92" text-anchor="middle" fill="#8b949e" font-family="DM Sans,sans-serif" font-size="11">validate input</text>
+                    <text x="647" y="75" text-anchor="middle" fill="#f0883e" font-family="DM Sans,sans-serif" font-size="12" font-weight="600">Auth action</text>
+                    <text x="647" y="92" text-anchor="middle" fill="#8b949e" font-family="DM Sans,sans-serif" font-size="11">hash / verify / session</text>
+                    <line x1="151" y1="81" x2="203" y2="81" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#arr)"/>
+                    <line x1="336" y1="81" x2="388" y2="81" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#arr)"/>
+                    <line x1="521" y1="81" x2="573" y2="81" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#arr)"/>
+                </svg>
+                <p class="diagram-caption">The browser form flow: request page → submit form → validate → perform authentication action.</p>
+            </div>
+
+            <div class="callout callout-info">
+                <div class="callout-title">Conceptual Anchor</div>
+                Authentication still means “Who are you?” The only thing changing today is the interface. Instead of only sending JSON from Postman or a frontend client, we are letting a browser user submit regular HTML forms.
+            </div>
+        </section>
+
+        <hr class="section-div">
+
+        <section id="s2">
+            <div class="section-header"><span class="section-num">02</span><h2>Serving Both API and Form Clients</h2></div>
+            <p>
+                Rather than writing separate routes for API access and browser access, we can teach each route to detect which
+                kind of client is making the request. When a client sends <code>Content-Type: application/json</code>,
+                Flask sets <code>request.is_json</code> to <code>True</code>. A plain browser form submission uses
+                <code>application/x-www-form-urlencoded</code>, so <code>request.is_json</code> will be <code>False</code>.
+            </p>
+            <p>
+                Inside <code>POST</code>, the route branches on that flag: the JSON path uses the existing
+                <code>request.get_json()</code> logic and returns <code>jsonify(...)</code>; the form path uses
+                <code>form.validate_on_submit()</code> and returns a redirect or a re-rendered template.
+                The database operations and the model are the same in both paths.
+            </p>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Concern</th>
+                        <th>JSON API path (<code>request.is_json</code>)</th>
+                        <th>Form path (browser)</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>HTTP methods</td>
+                        <td><code>POST</code> only</td>
+                        <td><code>GET</code> (render form) + <code>POST</code> (submit)</td>
+                    </tr>
+                    <tr>
+                        <td>Read input</td>
+                        <td><code>request.get_json()</code></td>
+                        <td><code>FlaskForm</code> reads submitted fields automatically</td>
+                    </tr>
+                    <tr>
+                        <td>Validation</td>
+                        <td>Manual checks in the route</td>
+                        <td><code>form.validate_on_submit()</code> with WTForms validators</td>
+                    </tr>
+                    <tr>
+                        <td>Success response</td>
+                        <td><code>jsonify(user.to_dict())</code> + status code</td>
+                        <td><code>flash()</code> + <code>redirect()</code></td>
+                    </tr>
+                    <tr>
+                        <td>Error response</td>
+                        <td><code>jsonify({"error": "..."})</code> + 4xx code</td>
+                        <td><code>flash()</code> + <code>render_template()</code> with form errors</td>
+                    </tr>
+                    <tr>
+                        <td>CSRF protection</td>
+                        <td>Not needed (no cookies involved)</td>
+                        <td><code>{{ form.hidden_tag() }}</code> renders hidden token</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="callout callout-warning">
+                <div class="callout-title">Key Principle</div>
+                The routes are extended, not replaced. Any existing API client — Postman, a React app, a mobile client — continues
+                to work without any changes. The form support is purely additive.
+            </div>
+
+            <details class="expand">
+                <summary>How does request.is_json work under the hood?</summary>
+                <div class="expand-body">
+                    <p>
+                        Flask checks the <code>Content-Type</code> header of the incoming request. If it is
+                        <code>application/json</code> (or another JSON media type), <code>request.is_json</code>
+                        returns <code>True</code>. A browser submitting an HTML form sends
+                        <code>application/x-www-form-urlencoded</code> by default, so the value is <code>False</code>.
+                        The check is cheap and does not read the body.
+                    </p>
+                </div>
+            </details>
+        </section>
+
+        <hr class="section-div">
+
+        <section id="s3">
+            <div class="section-header"><span class="section-num">03</span><h2>Install and Configure Flask-WTF</h2></div>
+            <p>
+                Flask-WTF integrates WTForms with Flask. It gives us Python form classes, validators, automatic error collection,
+                and CSRF protection. CSRF protection matters because browser forms automatically include cookies, so we want a hidden
+                token that proves the form was generated by our application.
+            </p>
+
+            <div class="code-block">
+                <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-filename">requirements.txt</div><div class="code-lang">text</div></div>
+                <pre><code>Flask-WTF==1.2.2
+WTForms==3.2.1</code></pre>
+            </div>
+
+            <p>Install the new packages:</p>
+            <div class="code-block">
+                <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-filename">terminal</div><div class="code-lang">bash</div></div>
+                <pre><code>pip install Flask-WTF WTForms
+pip freeze &gt; requirements.txt</code></pre>
+            </div>
+
+            <p>Then confirm the app has a secret key. Flask-WTF uses this key to sign CSRF tokens.</p>
+            <div class="code-block">
+                <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-filename">app/config.py</div><div class="code-lang">python</div></div>
+                <pre><code><span class="kw">import</span> os
+<span class="kw">from</span> dotenv <span class="kw">import</span> load_dotenv
+
+load_dotenv()
+
+
+<span class="kw">class</span> <span class="cl">Config</span>:
+    <span class="cm"># In production, override these with environment variables or a .env file</span>
+    SECRET_KEY = os.getenv(<span class="st">"SECRET_KEY"</span>, <span class="st">"change-me-in-production"</span>)
+    SQLALCHEMY_DATABASE_URI = os.getenv(<span class="st">"DATABASE_URL"</span>)
+    SQLALCHEMY_TRACK_MODIFICATIONS = <span class="kw">False</span></code></pre>
+            </div>
+
+            <div class="callout callout-danger">
+                <div class="callout-title">Security Note</div>
+                The development fallback is convenient locally, but production should use a strong <code>SECRET_KEY</code> from an environment variable. If the secret key is predictable, session cookies and CSRF tokens are weaker.
+            </div>
+        </section>
+
+        <hr class="section-div">
+
+        <section id="s4">
+            <div class="section-header"><span class="section-num">04</span><h2>Create Form Classes</h2></div>
+            <p>
+                A form class describes expected fields and validation rules. This keeps validation close to the shape of the form,
+                instead of scattering checks throughout the route. For registration, we need username, email, password, and password confirmation.
+                For login, we need username, password, and optionally a remember-me checkbox.
+            </p>
+
+            <div class="code-block">
+                <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-filename">app/auth/forms.py</div><div class="code-lang">python</div></div>
+                <pre><code><span class="kw">from</span> flask_wtf <span class="kw">import</span> <span class="cl">FlaskForm</span>
+<span class="kw">from</span> wtforms <span class="kw">import</span> <span class="cl">StringField</span>, <span class="cl">PasswordField</span>, <span class="cl">BooleanField</span>, <span class="cl">SubmitField</span>
+<span class="kw">from</span> wtforms.validators <span class="kw">import</span> <span class="cl">DataRequired</span>, <span class="cl">Email</span>, <span class="cl">EqualTo</span>, <span class="cl">Length</span>, <span class="cl">ValidationError</span>
+
+<span class="kw">from</span> app.models <span class="kw">import</span> <span class="cl">User</span>
+
+
+<span class="kw">class</span> <span class="cl">RegistrationForm</span>(<span class="cl">FlaskForm</span>):
+    username = <span class="cl">StringField</span>(
+        <span class="st">"Username"</span>,
+        validators=[<span class="cl">DataRequired</span>(), <span class="cl">Length</span>(min=3, max=80)]
+    )
+    email = <span class="cl">StringField</span>(
+        <span class="st">"Email"</span>,
+        validators=[<span class="cl">DataRequired</span>(), <span class="cl">Length</span>(max=120), <span class="cl">Email</span>()]
+    )
+    password = <span class="cl">PasswordField</span>(
+        <span class="st">"Password"</span>,
+        validators=[<span class="cl">DataRequired</span>(), <span class="cl">Length</span>(min=8)]
+    )
+    confirm_password = <span class="cl">PasswordField</span>(
+        <span class="st">"Confirm Password"</span>,
+        validators=[<span class="cl">DataRequired</span>(), <span class="cl">EqualTo</span>(<span class="st">"password"</span>, message=<span class="st">"Passwords must match."</span>)]
+    )
+    submit = <span class="cl">SubmitField</span>(<span class="st">"Create Account"</span>)
+
+    <span class="kw">def</span> <span class="fn">validate_username</span>(<span class="nb">self</span>, username):
+        existing = <span class="cl">User</span>.query.filter_by(username=username.data.strip()).first()
+        <span class="kw">if</span> existing:
+            <span class="kw">raise</span> <span class="cl">ValidationError</span>(<span class="st">"That username is already taken."</span>)
+
+    <span class="kw">def</span> <span class="fn">validate_email</span>(<span class="nb">self</span>, email):
+        existing = <span class="cl">User</span>.query.filter_by(email=email.data.strip().lower()).first()
+        <span class="kw">if</span> existing:
+            <span class="kw">raise</span> <span class="cl">ValidationError</span>(<span class="st">"That email is already registered."</span>)
+
+
+<span class="kw">class</span> <span class="cl">LoginForm</span>(<span class="cl">FlaskForm</span>):
+    username = <span class="cl">StringField</span>(<span class="st">"Username"</span>, validators=[<span class="cl">DataRequired</span>()])
+    password = <span class="cl">PasswordField</span>(<span class="st">"Password"</span>, validators=[<span class="cl">DataRequired</span>()])
+    remember_me = <span class="cl">BooleanField</span>(<span class="st">"Remember me"</span>)
+    submit = <span class="cl">SubmitField</span>(<span class="st">"Log In"</span>)</code></pre>
+            </div>
+
+            <div class="callout callout-success">
+                <div class="callout-title">Why This Design Helps</div>
+                The route can now ask one clean question: <code>form.validate_on_submit()</code>. If validation fails, the form object already knows which fields failed and why.
+            </div>
+
+            <details class="expand">
+                <summary>What does validate_on_submit() actually check?</summary>
+                <div class="expand-body">
+                    <p>
+                        <code>validate_on_submit()</code> is a convenience method from Flask-WTF. It returns <code>True</code> only when the request is a submitted form request, usually <code>POST</code>, and every validator passes. On a normal <code>GET</code> request, it returns <code>False</code>, which lets the route render the empty form.
+                    </p>
+                </div>
+            </details>
+        </section>
+
+        <hr class="section-div">
+
+        <section id="s5">
+            <div class="section-header"><span class="section-num">05</span><h2>Build the Registration Route</h2></div>
+            <p>
+                Registration is the moment where a raw password enters the application. The route should never store that raw password.
+                It should create a <code>User</code>, pass the raw password into the write-only password property, let the model generate
+                a hash, and commit the new user.
+            </p>
+            <p>
+                Because the route now handles both JSON and form clients, the <code>POST</code> handler branches on
+                <code>request.is_json</code>. The JSON branch is the original API code, unchanged. The form branch
+                relies on <code>form.validate_on_submit()</code>. Adding <code>GET</code> to the allowed methods is what
+                enables rendering the blank form for browser users.
+            </p>
+
+            <div class="code-block">
+                <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-filename">app/auth/views.py — registration route (dual-mode)</div><div class="code-lang">python</div></div>
+                <pre><code><span class="kw">from</span> flask <span class="kw">import</span> request, jsonify, render_template, redirect, url_for, flash
+<span class="kw">from</span> flask_login <span class="kw">import</span> login_user, logout_user, login_required
+
+<span class="kw">from</span> app.extensions <span class="kw">import</span> db
+<span class="kw">from</span> app.models <span class="kw">import</span> <span class="cl">User</span>
+<span class="kw">from</span> .forms <span class="kw">import</span> <span class="cl">RegistrationForm</span>, <span class="cl">LoginForm</span>
+<span class="kw">from</span> . <span class="kw">import</span> auth_bp
+
+
+<span class="fn">@auth_bp.route</span>(<span class="st">"/register"</span>, methods=[<span class="st">"GET"</span>, <span class="st">"POST"</span>])
+<span class="kw">def</span> <span class="fn">register</span>():
+    <span class="cm"># ── JSON / API path ──────────────────────────────────────────────────</span>
+    <span class="kw">if</span> request.is_json:
+        data     = request.get_json() <span class="kw">or</span> {}
+        username = data.get(<span class="st">"username"</span>, <span class="st">""</span>).strip()
+        email    = data.get(<span class="st">"email"</span>,    <span class="st">""</span>).strip().lower()
+        password = data.get(<span class="st">"password"</span>, <span class="st">""</span>)
+
+        <span class="kw">if not</span> username <span class="kw">or not</span> email <span class="kw">or not</span> password:
+            <span class="kw">return</span> jsonify({<span class="st">"error"</span>: <span class="st">"username, email and password are required"</span>}), 400
+        <span class="kw">if</span> len(password) &lt; 8:
+            <span class="kw">return</span> jsonify({<span class="st">"error"</span>: <span class="st">"password must be at least 8 characters"</span>}), 400
+        <span class="kw">if</span> <span class="cl">User</span>.query.filter_by(username=username).first():
+            <span class="kw">return</span> jsonify({<span class="st">"error"</span>: <span class="st">"username already taken"</span>}), 409
+        <span class="kw">if</span> <span class="cl">User</span>.query.filter_by(email=email).first():
+            <span class="kw">return</span> jsonify({<span class="st">"error"</span>: <span class="st">"email already registered"</span>}), 409
+
+        user = <span class="cl">User</span>(username=username, email=email)
+        user.password = password
+        db.session.add(user)
+        db.session.commit()
+        <span class="kw">return</span> jsonify(user.to_dict()), 201
+
+    <span class="cm"># ── HTML form path ───────────────────────────────────────────────────</span>
+    form = <span class="cl">RegistrationForm</span>()
+    <span class="kw">if</span> form.validate_on_submit():
+        user = <span class="cl">User</span>(
+            username=form.username.data.strip(),
+            email=form.email.data.strip().lower()
+        )
+        user.password = form.password.data
+        db.session.add(user)
+        db.session.commit()
+        flash(<span class="st">"Account created! Please log in."</span>, <span class="st">"success"</span>)
+        <span class="kw">return</span> redirect(url_for(<span class="st">"auth.login"</span>))
+
+    <span class="kw">return</span> render_template(<span class="st">"auth/register.html"</span>, form=form)</code></pre>
+            </div>
+
+            <div class="callout callout-info">
+                <div class="callout-title">Talking Points</div>
+                The route now handles three requests: <code>GET</code> renders the blank form; JSON <code>POST</code>
+                runs the original API logic and returns JSON; form <code>POST</code> runs WTForms validation and redirects.
+                The database write is identical in both <code>POST</code> branches.
+            </div>
+        </section>
+
+        <hr class="section-div">
+
+        <section id="s6">
+            <div class="section-header"><span class="section-num">06</span><h2>Build the Login and Logout Routes</h2></div>
+            <p>
+                Login does not create a new user. It finds an existing user, verifies the submitted password against the stored hash,
+                and then calls <code>login_user(user)</code>. Flask-Login stores the user's ID in the signed session cookie, and future
+                requests can access the logged-in user through <code>current_user</code>.
+            </p>
+            <p>
+                Like registration, the login route branches on <code>request.is_json</code>. The JSON branch returns
+                <code>jsonify(user.to_dict())</code>; the form branch flashes a message and redirects.
+                Logout remains a JSON-only <code>POST</code> endpoint &mdash; no browser-rendered page is needed for logging out.
+            </p>
+
+            <div class="code-block">
+                <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-filename">app/auth/views.py &mdash; login route (dual-mode) + logout</div><div class="code-lang">python</div></div>
+                <pre><code><span class="fn">@auth_bp.route</span>(<span class="st">"/login"</span>, methods=[<span class="st">"GET"</span>, <span class="st">"POST"</span>])
+<span class="kw">def</span> <span class="fn">login</span>():
+    <span class="cm"># ── JSON / API path ──────────────────────────────────────────────────</span>
+    <span class="kw">if</span> request.is_json:
+        data     = request.get_json() <span class="kw">or</span> {}
+        username = data.get(<span class="st">"username"</span>, <span class="st">""</span>)
+        password = data.get(<span class="st">"password"</span>, <span class="st">""</span>)
+
+        user = <span class="cl">User</span>.query.filter_by(username=username).first()
+        <span class="kw">if</span> user <span class="kw">is None or not</span> user.verify_password(password):
+            <span class="kw">return</span> jsonify({<span class="st">"error"</span>: <span class="st">"invalid username or password"</span>}), 401
+
+        remember = data.get(<span class="st">"remember_me"</span>, <span class="kw">False</span>)
+        login_user(user, remember=remember)
+        <span class="kw">return</span> jsonify(user.to_dict()), 200
+
+    <span class="cm"># ── HTML form path ───────────────────────────────────────────────────</span>
+    form = <span class="cl">LoginForm</span>()
+    <span class="kw">if</span> form.validate_on_submit():
+        user = <span class="cl">User</span>.query.filter_by(username=form.username.data).first()
+        <span class="kw">if</span> user <span class="kw">is None or not</span> user.verify_password(form.password.data):
+            flash(<span class="st">"Invalid username or password."</span>, <span class="st">"danger"</span>)
+            <span class="kw">return</span> render_template(<span class="st">"auth/login.html"</span>, form=form), 401
+
+        login_user(user, remember=form.remember_me.data)
+        flash(f<span class="st">"Welcome back, {user.username}! You are now logged in."</span>, <span class="st">"success"</span>)
+        <span class="kw">return</span> redirect(url_for(<span class="st">"main_bp.get_recipes"</span>))
+
+    <span class="kw">return</span> render_template(<span class="st">"auth/login.html"</span>, form=form)
+
+
+<span class="fn">@auth_bp.route</span>(<span class="st">"/logout"</span>, methods=[<span class="st">"POST"</span>])
+<span class="fn">@login_required</span>
+<span class="kw">def</span> <span class="fn">logout</span>():
+    logout_user()
+    <span class="kw">return</span> jsonify({<span class="st">"message"</span>: <span class="st">"logged out"</span>}), 200</code></pre>
+            </div>
+
+            <div class="callout callout-warning">
+                <div class="callout-title">Security Note</div>
+                The login failure message is intentionally generic. We should not say "username does not exist" or "password is wrong," because that helps an attacker discover valid usernames.
+            </div>
+
+            <div class="callout callout-info">
+                <div class="callout-title">About Logout</div>
+                Logout only handles <code>POST</code> and keeps its JSON response. A browser logout button should use a small
+                <code>&lt;form method="POST"&gt;</code> so no JavaScript is needed. The browser receives the JSON response
+                but ignores it &mdash; pair this with a <code>next</code> redirect parameter if you want the user to land elsewhere.
+            </div>
+        </section>
+
+        <hr class="section-div">
+
+        <section id="s7">
+            <div class="section-header"><span class="section-num">07</span><h2>Create the Templates</h2></div>
+            <p>
+                The templates render the form object. Each field knows its label, current value, validation errors, and HTML attributes.
+                The most important hidden piece is <code>{{ form.hidden_tag() }}</code>, which renders the CSRF token.
+            </p>
+
+            <div class="browser-card">
+                <div class="browser-top"><span></span><span></span><span></span><div class="browser-url">/auth/register</div></div>
+                <div class="mock-form">
+                    <h3>Create Account</h3>
+                    <div class="mock-label">Username</div><div class="mock-input">alex</div>
+                    <div class="mock-label">Email</div><div class="mock-input">alex@example.com</div>
+                    <div class="mock-label">Password</div><div class="mock-input">••••••••</div>
+                    <div class="mock-label">Confirm Password</div><div class="mock-input">••••••••</div>
+                    <div class="mock-button">Create Account</div>
+                </div>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-filename">templates/auth/register.html</div><div class="code-lang">html</div></div>
+                <pre><code>{% extends <span class="st">"base.html"</span> %}
+
+{% block content %}
+&lt;section class=<span class="st">"auth-card"</span>&gt;
+  &lt;h1&gt;Create Account&lt;/h1&gt;
+  &lt;p class=<span class="st">"muted"</span>&gt;Register so you can create and manage your own recipes.&lt;/p&gt;
+
+  &lt;form method=<span class="st">"POST"</span> action=<span class="st">"{{ url_for('auth.register') }}"</span>&gt;
+    {{ form.hidden_tag() }}
+
+    &lt;div class=<span class="st">"form-group"</span>&gt;
+      {{ form.username.label }}
+      {{ form.username(class=<span class="st">"form-control"</span>, placeholder=<span class="st">"e.g. chefmaria"</span>) }}
+      {% for error in form.username.errors %}
+        &lt;div class=<span class="st">"field-error"</span>&gt;{{ error }}&lt;/div&gt;
+      {% endfor %}
+    &lt;/div&gt;
+
+    &lt;div class=<span class="st">"form-group"</span>&gt;
+      {{ form.email.label }}
+      {{ form.email(class=<span class="st">"form-control"</span>, placeholder=<span class="st">"you@example.com"</span>) }}
+      {% for error in form.email.errors %}
+        &lt;div class=<span class="st">"field-error"</span>&gt;{{ error }}&lt;/div&gt;
+      {% endfor %}
+    &lt;/div&gt;
+
+    &lt;div class=<span class="st">"form-group"</span>&gt;
+      {{ form.password.label }}
+      {{ form.password(class=<span class="st">"form-control"</span>, placeholder=<span class="st">"At least 8 characters"</span>) }}
+      {% for error in form.password.errors %}
+        &lt;div class=<span class="st">"field-error"</span>&gt;{{ error }}&lt;/div&gt;
+      {% endfor %}
+    &lt;/div&gt;
+
+    &lt;div class=<span class="st">"form-group"</span>&gt;
+      {{ form.confirm_password.label }}
+      {{ form.confirm_password(class=<span class="st">"form-control"</span>, placeholder=<span class="st">"Repeat your password"</span>) }}
+      {% for error in form.confirm_password.errors %}
+        &lt;div class=<span class="st">"field-error"</span>&gt;{{ error }}&lt;/div&gt;
+      {% endfor %}
+    &lt;/div&gt;
+
+    {{ form.submit(class=<span class="st">"btn btn-primary btn-block"</span>) }}
+  &lt;/form&gt;
+
+  &lt;p class=<span class="st">"auth-switch"</span>&gt;
+    Already have an account?
+    &lt;a href=<span class="st">"{{ url_for('auth.login') }}"</span>&gt;Log in&lt;/a&gt;
+  &lt;/p&gt;
+&lt;/section&gt;
+{% endblock %}</code></pre>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-filename">templates/auth/login.html</div><div class="code-lang">html</div></div>
+                <pre><code>{% extends <span class="st">"base.html"</span> %}
+
+{% block content %}
+&lt;section class=<span class="st">"auth-card"</span>&gt;
+  &lt;h1&gt;Log In&lt;/h1&gt;
+  &lt;p class=<span class="st">"muted"</span>&gt;Welcome back! Log in to manage your recipes.&lt;/p&gt;
+
+  &lt;form method=<span class="st">"POST"</span> action=<span class="st">"{{ url_for('auth.login') }}"</span>&gt;
+    {{ form.hidden_tag() }}
+
+    &lt;div class=<span class="st">"form-group"</span>&gt;
+      {{ form.username.label }}
+      {{ form.username(class=<span class="st">"form-control"</span>, placeholder=<span class="st">"Your username"</span>) }}
+      {% for error in form.username.errors %}
+        &lt;div class=<span class="st">"field-error"</span>&gt;{{ error }}&lt;/div&gt;
+      {% endfor %}
+    &lt;/div&gt;
+
+    &lt;div class=<span class="st">"form-group"</span>&gt;
+      {{ form.password.label }}
+      {{ form.password(class=<span class="st">"form-control"</span>, placeholder=<span class="st">"••••••••"</span>) }}
+      {% for error in form.password.errors %}
+        &lt;div class=<span class="st">"field-error"</span>&gt;{{ error }}&lt;/div&gt;
+      {% endfor %}
+    &lt;/div&gt;
+
+    &lt;label class=<span class="st">"checkbox-row"</span>&gt;
+      {{ form.remember_me() }}
+      &lt;span&gt;{{ form.remember_me.label.text }}&lt;/span&gt;
+    &lt;/label&gt;
+
+    {{ form.submit(class=<span class="st">"btn btn-primary btn-block"</span>) }}
+  &lt;/form&gt;
+
+  &lt;p class=<span class="st">"auth-switch"</span>&gt;
+    Don't have an account?
+    &lt;a href=<span class="st">"{{ url_for('auth.register') }}"</span>&gt;Register&lt;/a&gt;
+  &lt;/p&gt;
+&lt;/section&gt;
+{% endblock %}</code></pre>
+            </div>
+
+            <details class="expand">
+                <summary>Optional: reduce repeated template code with a field macro</summary>
+                <div class="expand-body">
+                    <p>
+                        Once the basic version works, we can create a macro that renders a field, label, and errors. That keeps templates cleaner, but it is easier to learn the flow first with explicit field rendering.
+                    </p>
+                </div>
+            </details>
+        </section>
+
+        <hr class="section-div">
+
+        <section id="s8">
+            <div class="section-header"><span class="section-num">08</span><h2>Show Flash Messages and Update the Navbar</h2></div>
+            <p>
+                Flash messages let routes send one-time feedback to the next rendered page. This is ideal after registration,
+                login, logout, or validation failure. The base template should display messages near the top of the page.
+            </p>
+
+            <div class="code-block">
+                <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-filename">templates/base.html</div><div class="code-lang">html</div></div>
+                <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang=<span class="st">"en"</span>&gt;
+
+&lt;head&gt;
+    &lt;meta charset=<span class="st">"UTF-8"</span>&gt;
+    &lt;meta name=<span class="st">"viewport"</span> content=<span class="st">"width=device-width, initial-scale=1.0"</span>&gt;
+    &lt;title&gt;RecipeShare&lt;/title&gt;
+    &lt;style&gt;
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --brand:   #3b5bdb;
+            --brand-dark: #2f4ac4;
+            --accent:  #f76707;
+            --bg:      #f8f9fa;
+            --surface: #ffffff;
+            --border:  #dee2e6;
+            --text:    #212529;
+            --muted:   #6c757d;
+            --radius:  10px;
+            --shadow:  0 2px 12px rgba(0,0,0,.08);
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* ── Navbar ── */
+        .navbar {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 1px 4px rgba(0,0,0,.06);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .navbar-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .navbar-brand {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--brand);
+            text-decoration: none;
+            letter-spacing: -.02em;
+        }
+        .navbar-brand span { color: var(--accent); }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: .9rem;
+            font-weight: 500;
+            transition: color .15s;
+        }
+        .nav-links a:hover { color: var(--brand); }
+        .nav-user {
+            font-size: .9rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .nav-links .btn-nav {
+            background: var(--brand);
+            color: #fff !important;
+            padding: .4rem .9rem;
+            border-radius: 6px;
+            font-size: .85rem;
+            transition: background .15s;
+        }
+        .nav-links .btn-nav:hover { background: var(--brand-dark); }
+        .inline-form { display: inline; }
+        .link-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--muted);
+            font-size: .9rem;
+            font-weight: 500;
+            font-family: inherit;
+            transition: color .15s;
+        }
+        .link-button:hover { color: #c92a2a; }
+
+        /* ── Page wrapper ── */
+        .page-wrapper {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+        }
+
+        /* ── Flash messages ── */
+        .flash-stack { max-width: 1100px; margin: 1rem auto 0; padding: 0 1.5rem; }
+        .flash {
+            padding: .75rem 1rem;
+            border-radius: var(--radius);
+            margin-bottom: .5rem;
+            font-size: .9rem;
+            font-weight: 500;
+        }
+        .flash-success  { background: #d3f9d8; color: #2b8a3e; border: 1px solid #b2f2bb; }
+        .flash-danger   { background: #ffe3e3; color: #c92a2a; border: 1px solid #ffc9c9; }
+        .flash-warning  { background: #fff3bf; color: #e67700; border: 1px solid #ffe066; }
+        .flash-info     { background: #d0ebff; color: #1864ab; border: 1px solid #a5d8ff; }
+
+        /* ── Auth card ── */
+        .auth-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            box-shadow: var(--shadow);
+            max-width: 440px;
+            margin: 3rem auto;
+            padding: 2.5rem 2.25rem;
+        }
+        .auth-card h1 { font-size: 1.6rem; margin-bottom: .35rem; }
+        .auth-card .muted { color: var(--muted); font-size: .92rem; margin-bottom: 1.75rem; }
+
+        /* ── Form elements ── */
+        .form-group { margin-bottom: 1.1rem; }
+        .form-group label {
+            display: block;
+            font-size: .85rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: .35rem;
+        }
+        .form-control {
+            display: block;
+            width: 100%;
+            padding: .6rem .85rem;
+            font-size: .95rem;
+            font-family: inherit;
+            color: var(--text);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            transition: border-color .15s, box-shadow .15s;
+            outline: none;
+        }
+        .form-control:focus {
+            border-color: var(--brand);
+            box-shadow: 0 0 0 3px rgba(59,91,219,.15);
+            background: #fff;
+        }
+        .field-error { color: #c92a2a; font-size: .8rem; margin-top: .3rem; }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            font-size: .9rem;
+            color: var(--muted);
+            cursor: pointer;
+            margin-bottom: 1.25rem;
+        }
+
+        /* ── Buttons ── */
+        .btn {
+            display: inline-block;
+            padding: .65rem 1.25rem;
+            border-radius: 7px;
+            font-size: .95rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            border: none;
+            text-decoration: none;
+            transition: background .15s, transform .1s;
+        }
+        .btn:active { transform: scale(.98); }
+        .btn-primary { background: var(--brand); color: #fff; }
+        .btn-primary:hover { background: var(--brand-dark); }
+        .btn-block { width: 100%; text-align: center; margin-top: .5rem; }
+
+        .auth-switch {
+            text-align: center;
+            margin-top: 1.25rem;
+            font-size: .88rem;
+            color: var(--muted);
+        }
+        .auth-switch a { color: var(--brand); text-decoration: none; font-weight: 600; }
+        .auth-switch a:hover { text-decoration: underline; }
+    &lt;/style&gt;
+&lt;/head&gt;
+
+&lt;body&gt;
+
+&lt;nav class=<span class="st">"navbar"</span>&gt;
+    &lt;div class=<span class="st">"navbar-inner"</span>&gt;
+        &lt;a class=<span class="st">"navbar-brand"</span> href=<span class="st">"{{ url_for('home') }}"</span>&gt;Recipe&lt;span&gt;Share&lt;/span&gt;&lt;/a&gt;
+        &lt;div class=<span class="st">"nav-links"</span>&gt;
+            &lt;a href=<span class="st">"{{ url_for('home') }}"</span>&gt;Recipes&lt;/a&gt;
+            {% if current_user.is_authenticated %}
+                &lt;span class=<span class="st">"nav-user"</span>&gt;Hi, {{ current_user.username }}&lt;/span&gt;
+                &lt;form method=<span class="st">"POST"</span> action=<span class="st">"{{ url_for('auth.logout') }}"</span> class=<span class="st">"inline-form"</span>&gt;
+                    {% if config.WTF_CSRF_ENABLED %}&lt;input type=<span class="st">"hidden"</span> name=<span class="st">"csrf_token"</span> value=<span class="st">"{{ csrf_token() }}"</span>&gt;{% endif %}
+                    &lt;button type=<span class="st">"submit"</span> class=<span class="st">"link-button"</span>&gt;Logout&lt;/button&gt;
+                &lt;/form&gt;
+            {% else %}
+                &lt;a href=<span class="st">"{{ url_for('auth.login') }}"</span>&gt;Login&lt;/a&gt;
+                &lt;a href=<span class="st">"{{ url_for('auth.register') }}"</span> class=<span class="st">"btn-nav"</span>&gt;Register&lt;/a&gt;
+            {% endif %}
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/nav&gt;
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+&lt;div class=<span class="st">"flash-stack"</span>&gt;
+    {% for category, message in messages %}
+    &lt;div class=<span class="st">"flash flash-{{ category }}"</span>&gt;{{ message }}&lt;/div&gt;
+    {% endfor %}
+&lt;/div&gt;
+{% endif %}
+{% endwith %}
+
+&lt;div class=<span class="st">"page-wrapper"</span>&gt;
+    {% block content %}{% endblock %}
+&lt;/div&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+            </div>
+
+            <div class="callout callout-info">
+                <div class="callout-title">Why Logout Uses POST</div>
+                Logout changes server-side session state, so it should not be a plain GET link. A small POST form is safer and matches the idea that GET requests should be read-only.
+            </div>
+        </section>
+
+        <hr class="section-div">
+
+        <section id="s9">
+            <div class="section-header"><span class="section-num">09</span><h2>Protect Routes That Require a Logged-In User</h2></div>
+            <p>
+                Public routes like <code>GET /recipes</code> and <code>GET /recipes/&lt;id&gt;</code> remain open to everyone.
+                Routes that write data — <code>POST /recipes</code>, <code>PATCH /recipes/&lt;id&gt;</code>, and
+                <code>DELETE /recipes/&lt;id&gt;</code> — are decorated with <code>@login_required</code>.
+                The PATCH and DELETE routes also check <code>recipe.user_id != current_user.id</code> to enforce ownership,
+                returning a <strong>403 Forbidden</strong> if the logged-in user does not own the recipe.
+            </p>
+
+            <div class="code-block">
+                <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-filename">app/routes.py</div><div class="code-lang">python</div></div>
+                <pre><code><span class="kw">from</span> flask <span class="kw">import</span> Blueprint, jsonify, request
+<span class="kw">from</span> flask_login <span class="kw">import</span> login_required, current_user
+
+<span class="kw">from</span> .extensions <span class="kw">import</span> db
+<span class="kw">from</span> .models <span class="kw">import</span> <span class="cl">Recipe</span>
+
+main_bp = Blueprint(<span class="st">"main_bp"</span>, __name__)
+
+
+<span class="fn">@main_bp.route</span>(<span class="st">"/"</span>)
+<span class="kw">def</span> <span class="fn">api_home</span>():
+    <span class="kw">return</span> {<span class="st">"message"</span>: <span class="st">"RecipeShare API is running"</span>}
+
+
+<span class="fn">@main_bp.route</span>(<span class="st">"/recipes"</span>, methods=[<span class="st">"GET"</span>])
+<span class="kw">def</span> <span class="fn">get_recipes</span>():
+    recipes = <span class="cl">Recipe</span>.query.order_by(<span class="cl">Recipe</span>.created_at.desc()).all()
+    <span class="kw">return</span> jsonify([recipe.to_dict() <span class="kw">for</span> recipe <span class="kw">in</span> recipes])
+
+
+<span class="fn">@main_bp.route</span>(<span class="st">"/recipes/&lt;int:recipe_id&gt;"</span>, methods=[<span class="st">"GET"</span>])
+<span class="kw">def</span> <span class="fn">get_recipe</span>(recipe_id: int):
+    recipe = <span class="cl">Recipe</span>.query.get_or_404(recipe_id)
+    <span class="kw">return</span> jsonify(recipe.to_dict())
+
+
+<span class="fn">@main_bp.route</span>(<span class="st">"/recipes"</span>, methods=[<span class="st">"POST"</span>])
+<span class="fn">@login_required</span>
+<span class="kw">def</span> <span class="fn">create_recipe</span>():
+    data = request.get_json() <span class="kw">or</span> {}
+
+    required_fields = [<span class="st">"title"</span>, <span class="st">"description"</span>, <span class="st">"instructions"</span>, <span class="st">"prep_time"</span>]
+    missing = [field <span class="kw">for</span> field <span class="kw">in</span> required_fields <span class="kw">if</span> field <span class="kw">not in</span> data]
+    <span class="kw">if</span> missing:
+        <span class="kw">return</span> {<span class="st">"error"</span>: f<span class="st">"Missing required fields: {', '.join(missing)}"</span>}, 400
+
+    recipe = <span class="cl">Recipe</span>(
+        title=data[<span class="st">"title"</span>],
+        description=data[<span class="st">"description"</span>],
+        instructions=data[<span class="st">"instructions"</span>],
+        prep_time=data[<span class="st">"prep_time"</span>],
+        author=current_user,
+    )
+
+    db.session.add(recipe)
+    db.session.commit()
+    <span class="kw">return</span> jsonify(recipe.to_dict()), 201
+
+
+<span class="fn">@main_bp.route</span>(<span class="st">"/recipes/&lt;int:recipe_id&gt;"</span>, methods=[<span class="st">"PATCH"</span>])
+<span class="fn">@login_required</span>
+<span class="kw">def</span> <span class="fn">update_recipe</span>(recipe_id: int):
+    recipe = <span class="cl">Recipe</span>.query.get_or_404(recipe_id)
+    <span class="kw">if</span> recipe.user_id != current_user.id:
+        <span class="kw">return</span> jsonify({<span class="st">"error"</span>: <span class="st">"forbidden"</span>}), 403
+
+    data = request.get_json() <span class="kw">or</span> {}
+    updatable_fields = [<span class="st">"title"</span>, <span class="st">"description"</span>, <span class="st">"instructions"</span>, <span class="st">"prep_time"</span>]
+    <span class="kw">for</span> field <span class="kw">in</span> updatable_fields:
+        <span class="kw">if</span> field <span class="kw">in</span> data:
+            setattr(recipe, field, data[field])
+
+    db.session.commit()
+    <span class="kw">return</span> jsonify(recipe.to_dict()), 200
+
+
+<span class="fn">@main_bp.route</span>(<span class="st">"/recipes/&lt;int:recipe_id&gt;"</span>, methods=[<span class="st">"DELETE"</span>])
+<span class="fn">@login_required</span>
+<span class="kw">def</span> <span class="fn">delete_recipe</span>(recipe_id: int):
+    recipe = <span class="cl">Recipe</span>.query.get_or_404(recipe_id)
+    <span class="kw">if</span> recipe.user_id != current_user.id:
+        <span class="kw">return</span> jsonify({<span class="st">"error"</span>: <span class="st">"forbidden"</span>}), 403
+    db.session.delete(recipe)
+    db.session.commit()
+    <span class="kw">return</span> <span class="st">""</span>, 204</code></pre>
+            </div>
+
+            <div class="callout callout-success">
+                <div class="callout-title">Authentication + Authorization</div>
+                <code>@login_required</code> checks that someone is logged in. The <code>recipe.author_id != current_user.id</code> check handles authorization: this logged-in user may not be allowed to modify every record.
+            </div>
+        </section>
+
+        <hr class="section-div">
+
+        <section id="s10">
+            <div class="section-header"><span class="section-num">10</span><h2>Test the Form-Based Flow</h2></div>
+            <p>
+                Form-based routes can be tested with Flask’s test client. In tests, CSRF is often disabled so we can focus on route behavior,
+                validation rules, password hashing, and session changes. The tests should verify successful registration, duplicate username
+                validation, successful login, bad login, and protected route behavior.
+            </p>
+
+            <div class="code-block">
+                <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-filename">tests/test_auth_forms.py</div><div class="code-lang">python</div></div>
+                <pre><code><span class="kw">import</span> pytest
+
+<span class="kw">from</span> app <span class="kw">import</span> create_app, db
+<span class="kw">from</span> app.models <span class="kw">import</span> <span class="cl">User</span>
+
+
+<span class="fn">@pytest.fixture</span>
+<span class="kw">def</span> <span class="fn">client</span>():
+    app = create_app({
+        <span class="st">"TESTING"</span>: <span class="kw">True</span>,
+        <span class="st">"WTF_CSRF_ENABLED"</span>: <span class="kw">False</span>,
+        <span class="st">"SQLALCHEMY_DATABASE_URI"</span>: <span class="st">"sqlite:///:memory:"</span>,
+        <span class="st">"SECRET_KEY"</span>: <span class="st">"test-secret"</span>,
+    })
+
+    <span class="kw">with</span> app.app_context():
+        db.create_all()
+        <span class="kw">yield</span> app.test_client()
+        db.drop_all()
+
+
+<span class="kw">def</span> <span class="fn">register</span>(client, username=<span class="st">"alice"</span>, email=<span class="st">"alice@example.com"</span>, password=<span class="st">"password123"</span>):
+    <span class="kw">return</span> client.post(<span class="st">"/auth/register"</span>, data={
+        <span class="st">"username"</span>: username,
+        <span class="st">"email"</span>: email,
+        <span class="st">"password"</span>: password,
+        <span class="st">"confirm_password"</span>: password,
+    }, follow_redirects=<span class="kw">True</span>)
+
+
+<span class="kw">def</span> <span class="fn">login</span>(client, username=<span class="st">"alice"</span>, password=<span class="st">"password123"</span>):
+    <span class="kw">return</span> client.post(<span class="st">"/auth/login"</span>, data={
+        <span class="st">"username"</span>: username,
+        <span class="st">"password"</span>: password,
+    }, follow_redirects=<span class="kw">True</span>)
+
+
+<span class="kw">def</span> <span class="fn">test_register_creates_user_with_hashed_password</span>(client):
+    response = register(client)
+    <span class="kw">assert</span> response.status_code == 200
+
+    user = <span class="cl">User</span>.query.filter_by(username=<span class="st">"alice"</span>).first()
+    <span class="kw">assert</span> user <span class="kw">is not None</span>
+    <span class="kw">assert</span> user.password_hash != <span class="st">"password123"</span>
+    <span class="kw">assert</span> user.verify_password(<span class="st">"password123"</span>) <span class="kw">is True</span>
+
+
+<span class="kw">def</span> <span class="fn">test_register_rejects_duplicate_username</span>(client):
+    register(client)
+    response = register(client, email=<span class="st">"other@example.com"</span>)
+    <span class="kw">assert</span> b<span class="st">"already taken"</span> <span class="kw">in</span> response.data
+
+
+<span class="kw">def</span> <span class="fn">test_login_success</span>(client):
+    register(client)
+    response = login(client)
+    <span class="kw">assert</span> b<span class="st">"logged in"</span> <span class="kw">in</span> response.data.lower()
+
+
+<span class="kw">def</span> <span class="fn">test_login_wrong_password</span>(client):
+    register(client)
+    response = login(client, password=<span class="st">"wrong-password"</span>)
+    <span class="kw">assert</span> response.status_code == 401
+    <span class="kw">assert</span> b<span class="st">"invalid username or password"</span> <span class="kw">in</span> response.data.lower()</code></pre>
+            </div>
+
+            <div class="callout callout-info">
+                <div class="callout-title">Testing Goal</div>
+                We are not testing Flask-WTF itself. We are testing that our application wires the form, model, database session, and Flask-Login behavior together correctly.
+            </div>
+        </section>
+
+        <hr class="section-div">
+
+        <section id="s11">
+            <div class="section-header"><span class="section-num">11</span><h2>End-of-Lesson Checklist</h2></div>
+            <p>By the end of this lesson, we should be able to talk through the complete browser-based authentication flow.</p>
+
+            <ul class="step-list">
+                <li>We can explain the difference between API authentication and form-based authentication.</li>
+                <li>We can create Flask-WTF form classes with validators for username, email, password, and password confirmation.</li>
+                <li>We can render forms in templates, including <code>{{ form.hidden_tag() }}</code> for CSRF protection.</li>
+                <li>We can register a user without storing the plain-text password.</li>
+                <li>We can verify a submitted password using the stored password hash.</li>
+                <li>We can call <code>login_user()</code> and <code>logout_user()</code> to manage user sessions.</li>
+                <li>We can use <code>current_user</code> to customize the navbar and connect created records to the logged-in user.</li>
+                <li>We can protect routes with <code>@login_required</code> and separately check record ownership.</li>
+                <li>We can use <code>request.is_json</code> to serve both API and form clients from a single route without breaking existing JSON behavior.</li>
+                <li>We can test registration and login routes using Flask's test client.</li>
+            </ul>
+
+            <div class="callout callout-success">
+                <div class="callout-title">Big Picture</div>
+                The core authentication system is now usable from a browser and the existing JSON API continues to work unchanged. The same route serves both clients by branching on <code>request.is_json</code>. This pattern &mdash; extend, don't replace &mdash; is common in apps that are transitioning from a pure API toward a full-stack architecture.
+            </div>
+        </section>
+
+    </main>
+</div>
+
+</body>
+</html>

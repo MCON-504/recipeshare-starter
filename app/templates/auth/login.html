@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="auth-card">
+    <h1>Log In</h1>
+    <p class="muted">Welcome back! Log in to manage your recipes.</p>
+
+    <form method="POST" action="{{ url_for('auth.login') }}">
+        {{ form.hidden_tag() }}
+
+        <div class="form-group">
+            {{ form.username.label }}
+            {{ form.username(class="form-control", placeholder="Your username") }}
+            {% for error in form.username.errors %}
+            <div class="field-error">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.password.label }}
+            {{ form.password(class="form-control", placeholder="••••••••") }}
+            {% for error in form.password.errors %}
+            <div class="field-error">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <label class="checkbox-row">
+            {{ form.remember_me() }}
+            <span>{{ form.remember_me.label.text }}</span>
+        </label>
+
+        {{ form.submit(class="btn btn-primary btn-block") }}
+    </form>
+
+    <p class="auth-switch">
+        Don't have an account?
+        <a href="{{ url_for('auth.register') }}">Register</a>
+    </p>
+</section>
+{% endblock %}

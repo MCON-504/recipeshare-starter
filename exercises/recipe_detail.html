@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="recipe-detail">
+
+    {# ------------------------------------------------------------------ #}
+    {# EXERCISE 1                                                          #}
+    {# Display the recipe's fields here.                                   #}
+    {# Available on the `recipe` object:                                   #}
+    {#   recipe.title          – string                                    #}
+    {#   recipe.description    – string                                    #}
+    {#   recipe.instructions   – text (may contain line breaks)            #}
+    {#   recipe.prep_time      – integer (minutes)                         #}
+    {#   recipe.author.username – string                                   #}
+    {# ------------------------------------------------------------------ #}
+
+    <h1><!-- TODO: recipe title --></h1>
+
+    <p class="recipe-meta">
+        <!-- TODO: prep time and author -->
+    </p>
+
+    <p class="recipe-description">
+        <!-- TODO: description -->
+    </p>
+
+    <h2>Instructions</h2>
+    <div class="recipe-instructions">
+        <!-- TODO: instructions -->
+    </div>
+
+    <a href="{{ url_for('main_bp.get_recipes') }}" class="btn btn-back">
+        ← Back to recipes
+    </a>
+
+</section>
+
+<style>
+    .recipe-detail { max-width: 720px; margin: 2rem auto; }
+    .recipe-detail h1 { font-size: 1.9rem; font-weight: 800; margin-bottom: .5rem; }
+    .recipe-detail h2 { font-size: 1.2rem; font-weight: 700; margin: 1.75rem 0 .6rem; }
+    .recipe-meta { font-size: .85rem; color: var(--muted); margin-bottom: 1.25rem; }
+    .recipe-description { color: var(--text); margin-bottom: 1rem; line-height: 1.7; }
+    .recipe-instructions { white-space: pre-wrap; line-height: 1.8; color: var(--text); }
+    .btn-back {
+        display: inline-block;
+        margin-top: 2rem;
+        color: var(--brand);
+        font-weight: 600;
+        text-decoration: none;
+        font-size: .9rem;
+    }
+    .btn-back:hover { text-decoration: underline; }
+</style>
+{% endblock %}
+

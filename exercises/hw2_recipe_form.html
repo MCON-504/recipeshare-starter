@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="recipe-form-card">
+
+    <h1>New Recipe</h1>
+    <p class="muted">Fill in the details below and click Save.</p>
+
+    <form method="POST" action="{{ url_for('main_bp.new_recipe') }}">
+        {{ form.hidden_tag() }}
+
+        {# ---------------------------------------------------------------- #}
+        {# TODO: render each field the same way as register.html            #}
+        {#                                                                   #}
+        {# Pattern for each field:                                           #}
+        {#   <div class="form-group">                                        #}
+        {#     {{ form.FIELD.label }}                                        #}
+        {#     {{ form.FIELD(class="form-control") }}                        #}
+        {#     {% for error in form.FIELD.errors %}                          #}
+        {#       <div class="field-error">{{ error }}</div>                  #}
+        {#     {% endfor %}                                                  #}
+        {#   </div>                                                          #}
+        {#                                                                   #}
+        {# Fields to render: title, description, instructions, prep_time    #}
+        {# ---------------------------------------------------------------- #}
+
+        {{ form.submit(class="btn btn-primary btn-block") }}
+    </form>
+
+    <p class="auth-switch">
+        <a href="{{ url_for('main_bp.get_recipes') }}">← Cancel</a>
+    </p>
+
+</section>
+
+<style>
+    .recipe-form-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        box-shadow: var(--shadow);
+        max-width: 600px;
+        margin: 3rem auto;
+        padding: 2.5rem 2.25rem;
+    }
+    .recipe-form-card h1 { font-size: 1.6rem; margin-bottom: .35rem; }
+    .recipe-form-card .muted { color: var(--muted); font-size: .92rem; margin-bottom: 1.75rem; }
+    textarea.form-control { min-height: 110px; resize: vertical; }
+</style>
+{% endblock %}
+

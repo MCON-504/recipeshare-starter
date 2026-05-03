@@ -26,6 +26,14 @@ def create_app(test_config: dict | None = None) -> Flask:
     from .auth import auth_bp
     app.register_blueprint(auth_bp, url_prefix="/auth")
 
+    from .models import Recipe
+    from flask import render_template
+
+    @app.route("/")
+    def home():
+        recipes = Recipe.query.order_by(Recipe.created_at.desc()).all()
+        return render_template("home.html", recipes=recipes)
+
     return app
 
 
