@@ -14,19 +14,22 @@
     {#   recipe.author.username – string                                   #}
     {# ------------------------------------------------------------------ #}
 
-    <h1><!-- TODO: recipe title --></h1>
+    <h1> {{recipe.title}}</h1>
 
     <p class="recipe-meta">
-        <!-- TODO: prep time and author -->
+        {{recipe.prep_time}} min prep
+        {% if recipe.author %}
+         By {{recipe.author.username}}
+        {% endif %}
     </p>
 
     <p class="recipe-description">
-        <!-- TODO: description -->
+        {{ recipe.description}}
     </p>
 
     <h2>Instructions</h2>
     <div class="recipe-instructions">
-        <!-- TODO: instructions -->
+        Recipe instructions: {{recipe.instructions}}
     </div>
 
     <a href="{{ url_for('main_bp.get_recipes') }}" class="btn btn-back">
