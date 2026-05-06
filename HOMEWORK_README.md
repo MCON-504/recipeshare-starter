@@ -25,7 +25,10 @@ should land on the page they originally wanted, not always the recipe list.
 2. If a `next` value exists **and** is a safe relative URL, redirect there.
 3. Otherwise fall back to `url_for("main_bp.get_recipes")`.
 4. The JSON login path (when `request.is_json` is `True`) must remain unchanged.
-5. Pass the `next` parameter through the login form's `action` URL so it
+
+`This has been added for the redirect to work`
+ 
+6. Pass the `next` parameter through the login form's `action` URL so it
    survives the POST:
    ```html
    <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next')) }}">
@@ -58,6 +61,9 @@ def is_safe_url(target: str) -> bool:
 
 ### Files to edit
 - `app/auth/views.py`
+
+<html><span color="red"> This has been added for the redirect to work</span></html>`
+
 - `app/templates/auth/login.html`
 
 ### Starter file
