@@ -97,7 +97,7 @@ def test_logout_requires_login(client):
 def test_logout_success(client):
     register(client)
     client.post("/auth/login", json={"username": "alice", "password": "s3cret!!"})
-    rv = client.post("/auth/logout")
+    rv = client.post("/auth/logout", content_type="application/json")
     assert rv.status_code == 200
     assert rv.get_json()["message"] == "logged out"
 

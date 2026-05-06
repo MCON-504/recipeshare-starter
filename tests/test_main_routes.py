@@ -46,7 +46,7 @@ def test_home(client):
 # ── GET /api/recipes ──────────────────────────────────
 
 def test_get_recipes_empty(client):
-    rv = client.get("/api/recipes")
+    rv = client.get("/api/recipes", content_type="application/json")
     assert rv.status_code == 200
     assert rv.get_json() == []
 
@@ -54,7 +54,7 @@ def test_get_recipes_empty(client):
 def test_get_recipes_returns_list(client):
     register_and_login(client)
     client.post("/api/recipes", json=RECIPE)
-    rv = client.get("/api/recipes")
+    rv = client.get("/api/recipes", content_type="application/json")
     assert rv.status_code == 200
     data = rv.get_json()
     assert len(data) == 1
@@ -64,7 +64,7 @@ def test_get_recipes_returns_list(client):
 def test_get_recipes_returns_all_fields(client):
     register_and_login(client)
     client.post("/api/recipes", json=RECIPE)
-    data = client.get("/api/recipes").get_json()
+    data = client.get("/api/recipes", content_type="application/json").get_json()
     recipe = data[0]
     for field in ("id", "title", "description", "instructions", "prep_time", "created_at", "user_id"):
         assert field in recipe
@@ -74,7 +74,7 @@ def test_get_recipes_ordered_newest_first(client):
     register_and_login(client)
     client.post("/api/recipes", json={**RECIPE, "title": "First"})
     client.post("/api/recipes", json={**RECIPE, "title": "Second"})
-    data = client.get("/api/recipes").get_json()
+    data = client.get("/api/recipes", content_type="application/json").get_json()
     assert data[0]["title"] == "Second"
     assert data[1]["title"] == "First"
 
@@ -84,7 +84,7 @@ def test_get_recipes_ordered_newest_first(client):
 def test_get_recipe_by_id(client):
     register_and_login(client)
     created = client.post("/api/recipes", json=RECIPE).get_json()
-    rv = client.get(f"/api/recipes/{created['id']}")
+    rv = client.get(f"/api/recipes/{created['id']}", content_type="application/json")
     assert rv.status_code == 200
     assert rv.get_json()["title"] == RECIPE["title"]
 
