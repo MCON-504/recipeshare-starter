@@ -4,7 +4,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, IntegerField, SubmitField
 from wtforms.validators import DataRequired, Length, NumberRange
 from flask import render_template, redirect, url_for, flash
-from .forms import FeedbackForm
+from .forms import FeedbackForm, RecipeForm
 from .extensions import db
 from .models import Recipe
 
@@ -19,13 +19,6 @@ def feedback():
         return redirect(url_for("main_bp.feedback"))
 
     return render_template("feedback.html", form=form)
-
-class RecipeForm(FlaskForm):
-    title = StringField("Title", validators=[DataRequired(), Length(max=150)])
-    description = TextAreaField("Description", validators=[DataRequired()])
-    instructions = TextAreaField("Instructions", validators=[DataRequired()])
-    prep_time = IntegerField("Prep Time (minutes)", validators=[DataRequired(), NumberRange(min=1)])
-    submit = SubmitField("Save Recipe")
 
 
 @main_bp.route("/")
