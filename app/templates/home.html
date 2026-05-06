@@ -9,11 +9,15 @@
 <section class="recipe-list">
     <h2>All Recipes</h2>
 
+    {% if current_user.is_authenticated %}
+    <a href="{{ url_for('main_bp.new_recipe') }}" class="btn btn-primary" style="margin-bottom:1rem; display:inline-block;">＋ Add Recipe</a>
+    {% endif %}
+
     {% if recipes %}
     <div class="recipe-grid">
         {% for recipe in recipes %}
         <div class="recipe-card">
-            <h3>{{ recipe.title }}</h3>
+            <h3><a href="{{ url_for('main_bp.get_recipe', recipe_id=recipe.id) }}">{{ recipe.title }}</a></h3>
             <p class="recipe-desc">{{ recipe.description }}</p>
             <span class="recipe-meta">⏱ {{ recipe.prep_time }} min prep</span>
         </div>
