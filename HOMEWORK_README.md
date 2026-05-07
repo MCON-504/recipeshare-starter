@@ -26,6 +26,16 @@ should land on the page they originally wanted, not always the recipe list.
 3. Otherwise fall back to `url_for("main_bp.get_recipes")`.
 4. The JSON login path (when `request.is_json` is `True`) must remain unchanged.
 
+<span style="background-color: darksalmon">This has been added for the redirect to work</span>
+
+5. Pass the `next` parameter through the login form's `action` URL so it
+   survives the POST:
+   ```html
+   <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next')) }}">
+   ```
+   Without this, `?next=...` is only on the GET request (the redirect from
+   Flask-Login) and is lost when the form submits.
+
 ### Safety rule
 
 Only redirect to `next` if it is a relative path (starts with `/` and does
@@ -51,6 +61,10 @@ def is_safe_url(target: str) -> bool:
 
 ### Files to edit
 - `app/auth/views.py`
+
+<span style="background-color: darksalmon"> This has been added for the redirect to work</span>
+
+- `app/templates/auth/login.html`
 
 ### Starter file
 `exercises/hw1_views_login_starter.py` — contains the `is_safe_url` helper

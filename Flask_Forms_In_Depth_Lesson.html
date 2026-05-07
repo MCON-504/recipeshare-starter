@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flask Forms</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Fraunces:ital,wght@0,300;0,600;0,800;1,300&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --surface2:  #1f2733;
+      --border:    #30363d;
+      --text:      #e6edf3;
+      --muted:     #8b949e;
+      --accent:    #f0883e;
+      --accent2:   #58a6ff;
+      --accent3:   #3fb950;
+      --danger:    #ff7b72;
+      --tag-bg:    rgba(240,136,62,.15);
+      --tag-border:rgba(240,136,62,.35);
+      --code-bg:   #0d1117;
+      --inline-code:#161b22;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      line-height: 1.75;
+      font-size: 16px;
+    }
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      height: 56px;
+    }
+    .breadcrumb {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .75rem;
+      color: var(--muted);
+      letter-spacing: .04em;
+    }
+    .breadcrumb span { color: var(--accent); }
+    .lesson-badge {
+      margin-left: auto;
+      background: var(--tag-bg);
+      border: 1px solid var(--tag-border);
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .7rem;
+      padding: .2rem .65rem;
+      border-radius: 2rem;
+      letter-spacing: .06em;
+    }
+    .hero {
+      padding: 5rem 2rem 3.5rem;
+      max-width: 940px;
+      margin: 0 auto;
+      animation: fadeUp .6s ease both;
+    }
+    .hero-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .75rem;
+      color: var(--accent);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+    .hero h1 {
+      font-family: 'Fraunces', serif;
+      font-size: clamp(2.2rem, 5vw, 3.6rem);
+      font-weight: 800;
+      line-height: 1.1;
+      color: var(--text);
+      margin-bottom: 1.25rem;
+    }
+    .hero h1 em { font-style: italic; color: var(--accent); }
+    .hero-sub {
+      font-size: 1.05rem;
+      color: var(--muted);
+      max-width: 760px;
+      margin-bottom: 2rem;
+    }
+    .objectives-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: .75rem;
+      margin-top: 1.5rem;
+    }
+    .obj-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: .9rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: .65rem;
+      font-size: .87rem;
+      transition: border-color .2s;
+    }
+    .obj-card:hover { border-color: var(--accent); }
+    .obj-icon { font-size: 1.1rem; flex-shrink: 0; }
+    .layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      max-width: 1180px;
+      margin: 0 auto;
+      gap: 0;
+      padding: 0 2rem 4rem;
+      align-items: start;
+    }
+    .toc {
+      position: sticky;
+      top: 72px;
+      padding: 1.5rem 1.5rem 1.5rem 0;
+    }
+    .toc-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .68rem;
+      color: var(--muted);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      margin-bottom: .75rem;
+    }
+    .toc ol { list-style: none; counter-reset: toc; }
+    .toc li { counter-increment: toc; margin-bottom: .15rem; }
+    .toc a {
+      font-size: .82rem;
+      color: var(--muted);
+      text-decoration: none;
+      display: flex;
+      gap: .5rem;
+      align-items: baseline;
+      padding: .25rem .4rem;
+      border-radius: 4px;
+      transition: color .15s, background .15s;
+    }
+    .toc a::before {
+      content: counter(toc, decimal-leading-zero);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .65rem;
+      color: var(--accent);
+      opacity: .6;
+      flex-shrink: 0;
+    }
+    .toc a:hover { color: var(--text); background: var(--surface); }
+    .content { padding: 1.5rem 0; min-width: 0; }
+    section { margin-bottom: 3.5rem; animation: fadeUp .5s ease both; }
+    .section-header { display: flex; align-items: center; gap: .75rem; margin-bottom: 1.5rem; }
+    .section-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .7rem;
+      color: var(--accent);
+      background: var(--tag-bg);
+      border: 1px solid var(--tag-border);
+      border-radius: 4px;
+      padding: .15rem .4rem;
+      flex-shrink: 0;
+    }
+    h2 { font-family: 'Fraunces', serif; font-size: 1.65rem; font-weight: 600; color: var(--text); }
+    h3 { font-family: 'Fraunces', serif; font-size: 1.15rem; font-weight: 600; color: var(--text); margin: 2rem 0 .75rem; }
+    h4 { font-size: 1rem; color: var(--text); margin: 1.25rem 0 .4rem; }
+    p { margin-bottom: 1rem; color: #c9d1d9; }
+    strong { font-weight: 600; color: var(--text); }
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .82em;
+      background: var(--inline-code);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .1em .35em;
+      color: var(--accent);
+    }
+    .code-block {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 1.25rem 0;
+      font-size: .84rem;
+    }
+    .code-header {
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      padding: .5rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+    .code-filename {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .72rem;
+      color: var(--muted);
+      flex: 1;
+    }
+    .code-lang {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .65rem;
+      color: var(--accent);
+      background: var(--tag-bg);
+      border: 1px solid var(--tag-border);
+      border-radius: 3px;
+      padding: .1rem .35rem;
+    }
+    .code-dots { display: flex; gap: .35rem; }
+    .code-dots span { width: 10px; height: 10px; border-radius: 50%; background: var(--border); }
+    pre { padding: 1.25rem; overflow-x: auto; line-height: 1.65; }
+    pre code { background: none; border: none; padding: 0; font-size: inherit; color: var(--text); }
+    .kw { color: #ff7b72; }
+    .fn { color: #d2a8ff; }
+    .st { color: #a5d6ff; }
+    .cm { color: #6e7681; font-style: italic; }
+    .cl { color: #ffa657; }
+    .nb { color: #79c0ff; }
+    .callout {
+      border-left: 3px solid;
+      border-radius: 0 8px 8px 0;
+      padding: 1rem 1.25rem;
+      margin: 1.25rem 0;
+      font-size: .92rem;
+    }
+    .callout-info    { border-color: var(--accent2); background: rgba(88,166,255,.07); }
+    .callout-warning { border-color: var(--accent);  background: rgba(240,136,62,.07); }
+    .callout-success { border-color: var(--accent3); background: rgba(63,185,80,.07); }
+    .callout-danger  { border-color: var(--danger);  background: rgba(255,123,114,.07); }
+    .callout-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .72rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: .4rem;
+      font-weight: 600;
+    }
+    .callout-info .callout-title { color: var(--accent2); }
+    .callout-warning .callout-title { color: var(--accent); }
+    .callout-success .callout-title { color: var(--accent3); }
+    .callout-danger .callout-title { color: var(--danger); }
+    .diagram-wrap, .practice-box, .homework-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+    }
+    .diagram-caption { text-align: center; font-size: .8rem; color: var(--muted); margin-top: .75rem; font-style: italic; }
+    .table-wrap { overflow-x: auto; margin: 1.25rem 0; }
+    table { width: 100%; border-collapse: collapse; font-size: .87rem; }
+    th {
+      background: var(--surface2);
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .72rem;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      padding: .65rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    td { padding: .65rem 1rem; border-bottom: 1px solid var(--border); color: #c9d1d9; vertical-align: top; }
+    tr:hover td { background: var(--surface); }
+    .step-list { list-style: none; counter-reset: steps; margin: 1.25rem 0; }
+    .step-list li { counter-increment: steps; display: flex; gap: 1rem; margin-bottom: 1rem; align-items: flex-start; color: #c9d1d9; }
+    .step-list li::before {
+      content: counter(steps);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .72rem;
+      font-weight: 600;
+      color: var(--bg);
+      background: var(--accent);
+      border-radius: 50%;
+      width: 22px; height: 22px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      margin-top: .2rem;
+    }
+    ul.normal { margin: .8rem 0 1.25rem 1.4rem; color: #c9d1d9; }
+    ul.normal li { margin-bottom: .45rem; }
+    hr.section-div { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
+    details.expand {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin: 1.25rem 0;
+      overflow: hidden;
+      transition: border-color .2s;
+    }
+    details.expand[open] { border-color: var(--accent2); }
+    details.expand summary {
+      display: flex; align-items: center; gap: .65rem;
+      padding: .85rem 1.1rem;
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .82rem;
+      color: var(--accent2);
+      font-weight: 600;
+      letter-spacing: .03em;
+      list-style: none;
+      user-select: none;
+    }
+    details.expand summary::-webkit-details-marker { display: none; }
+    details.expand summary::before { content: '▶'; font-size: .65rem; transition: transform .2s; color: var(--accent2); flex-shrink: 0; }
+    details.expand[open] summary::before { transform: rotate(90deg); }
+    details.expand summary:hover { background: var(--surface2); }
+    .expand-body { padding: 1.1rem 1.25rem; border-top: 1px solid var(--border); }
+    .browser-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 1.5rem 0;
+    }
+    .browser-top {
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      padding: .65rem 1rem;
+      display: flex;
+      gap: .5rem;
+      align-items: center;
+    }
+    .browser-top span { width: 11px; height: 11px; border-radius: 50%; background: var(--border); }
+    .browser-url { margin-left: .5rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: .75rem; }
+    .mock-form { padding: 1.5rem; max-width: 500px; margin: 0 auto; }
+    .mock-form h3 { margin-top: 0; }
+    .mock-label { color: var(--muted); font-size: .82rem; font-family: 'JetBrains Mono', monospace; margin: .75rem 0 .25rem; }
+    .mock-input { border: 1px solid var(--border); background: var(--code-bg); border-radius: 6px; padding: .7rem .8rem; color: var(--text); }
+    .mock-button { margin-top: 1rem; background: var(--accent); color: var(--bg); border-radius: 6px; padding: .65rem .9rem; text-align: center; font-weight: 600; }
+    .two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
+    .mini-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.1rem;
+    }
+    .mini-card h4 { margin-top: 0; color: var(--accent2); font-family: 'JetBrains Mono', monospace; font-size: .86rem; }
+    .checkpoint {
+      background: rgba(63,185,80,.08);
+      border: 1px solid rgba(63,185,80,.25);
+      border-radius: 8px;
+      padding: 1rem 1.1rem;
+      margin: 1.25rem 0;
+    }
+    .checkpoint strong { color: var(--accent3); }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 720px) {
+      .layout { grid-template-columns: 1fr; padding: 0 1rem 3rem; }
+      .toc { display: none; }
+      .hero { padding: 3rem 1rem 2rem; }
+      header { padding: 0 1rem; }
+      .lesson-badge { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="breadcrumb">Flask &rsaquo; Recipe Share App &rsaquo; <span>Slow Introduction to Forms</span></div>
+  <div class="lesson-badge">LESSON 09A</div>
+</header>
+
+<div class="hero">
+  <div class="hero-eyebrow">Flask — Browser Forms</div>
+  <h1>Flask Forms</h1>
+  <p class="hero-sub">
+    The current application already has routes, templates, SQLAlchemy models, and authentication endpoints.
+    In this lesson we slow down and focus on one idea: how browser forms work in Flask. We will build two forms together in class: a small contact-style feedback form first, then a recipe form that connects to the existing RecipeShare application.
+  </p>
+  <div class="objectives-grid">
+    <div class="obj-card"><span class="obj-icon">🧭</span><span>Trace the full GET → form → POST → validate → redirect flow</span></div>
+    <div class="obj-card"><span class="obj-icon">🧾</span><span>Create Flask-WTF form classes one field at a time</span></div>
+    <div class="obj-card"><span class="obj-icon">🛡️</span><span>Explain CSRF protection and why <code>hidden_tag()</code> matters</span></div>
+    <div class="obj-card"><span class="obj-icon">🧱</span><span>Render labels, inputs, submit buttons, and validation errors</span></div>
+    <div class="obj-card"><span class="obj-icon">🍲</span><span>Build a recipe create form using the existing Recipe model</span></div>
+    <div class="obj-card"><span class="obj-icon">🏠</span><span>Complete a homework form using a provided template skeleton</span></div>
+  </div>
+</div>
+
+<div class="layout">
+  <nav class="toc">
+    <div class="toc-title">Contents</div>
+    <ol>
+      <li><a href="#s1">Starting Point</a></li>
+      <li><a href="#s2">What Is a Form?</a></li>
+      <li><a href="#s3">Install + Configure</a></li>
+      <li><a href="#s4">Form Flow</a></li>
+      <li><a href="#s5">In-Class Form 1</a></li>
+      <li><a href="#s6">Validation Errors</a></li>
+      <li><a href="#s7">In-Class Form 2</a></li>
+      <li><a href="#s8">Connect to Database</a></li>
+      <li><a href="#s9">Template Patterns</a></li>
+      <li><a href="#s10">Testing the Flow</a></li>
+      <li><a href="#s11">Assignment</a></li>
+      <li><a href="#s12">Checklist</a></li>
+    </ol>
+  </nav>
+
+  <main class="content">
+
+    <section id="s1">
+      <div class="section-header"><span class="section-num">01</span><h2>Starting Point: What the App Already Has</h2></div>
+      <p>
+        The RecipeShare application already has a backend structure. We have routes, templates, models, and authentication logic. Earlier, we used JSON requests for many actions because JSON is convenient for APIs, Postman, and frontend applications. A browser form is different. It gives the user a page with inputs and a button, and the browser sends the submitted values back to the server.
+      </p>
+      <p>
+        Today we will not try to build every form in the application at once. We will build slowly. First, we will create a form that does not touch the database. That lets us understand the mechanics without worrying about models or commits. Then we will create a form that does touch the database: a recipe form.
+      </p>
+      <div class="callout callout-info">
+        <div class="callout-title">Focus</div>
+        The goal is not to memorize syntax. The goal is to recognize the pattern. Every Flask form follows the same rhythm: create a form class, render it on GET, validate it on POST, then either show errors or perform the action.
+      </div>
+      <div class="two-col">
+        <div class="mini-card">
+          <h4>In class</h4>
+          <p>We build two forms together: a feedback form and a recipe creation form.</p>
+        </div>
+        <div class="mini-card">
+          <h4>Assignmentk</h4>
+          <p>Build another form with a model, a route, and a mostly provided template skeleton.</p>
+        </div>
+      </div>
+    </section>
+
+    <hr class="section-div">
+
+    <section id="s2">
+      <div class="section-header"><span class="section-num">02</span><h2>What Is a Form in a Flask Application?</h2></div>
+      <p>
+        A browser form is an HTML element that collects input from a user. The browser does not know about Python classes, SQLAlchemy models, or Flask routes. It only knows that when the user clicks submit, it should send named fields to a URL using an HTTP method such as <code>POST</code>.
+      </p>
+      <p>
+        Flask receives that request. Without Flask-WTF, we could read values manually from <code>request.form</code>. That works, but it becomes repetitive as soon as we need validation, error messages, reusable field definitions, and CSRF protection. Flask-WTF lets us describe the form in Python and then render that form in Jinja.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Layer</th><th>Responsibility</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td>HTML template</td><td>Displays the form fields and submit button</td><td><code>{{ form.title(...) }}</code></td></tr>
+            <tr><td>Form class</td><td>Defines fields and validation rules</td><td><code>StringField</code>, <code>DataRequired()</code></td></tr>
+            <tr><td>Route</td><td>Creates the form, checks submission, and decides the response</td><td><code>form.validate_on_submit()</code></td></tr>
+            <tr><td>Model/database</td><td>Stores valid submitted data when needed</td><td><code>db.session.add(recipe)</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-warning">
+        <div class="callout-title">Important Distinction</div>
+        A form is not the database model. A model describes stored data. A form describes user input. They often look similar, but they are not the same object and they do not have the same job.
+      </div>
+    </section>
+
+    <hr class="section-div">
+
+    <section id="s3">
+      <div class="section-header"><span class="section-num">03</span><h2>Flask-WTF Module</h2></div>
+      <p>
+        Flask-WTF is the Flask integration for WTForms. WTForms provides fields and validators. Flask-WTF adds Flask-friendly behavior such as <code>validate_on_submit()</code> and CSRF protection.
+          In the last class we installed Flask-WTF forms by adding them to the requirements.txt
+      </p>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-filename">requirements.txt</div><div class="code-lang">bash</div></div>
+        <pre><code># Forms
+#-----
+Flask-WTF==1.2.2
+WTForms==3.2.1
+#-----
+        </code></pre>
+
+      </div>
+      <p>
+        A Flask-WTF form needs a secret key. The secret key is used to sign CSRF tokens. In a real deployed app, this value should come from an environment variable.
+      </p>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-filename">app/config.py</div><div class="code-lang">python</div></div>
+        <pre><code><span class="kw">import</span> os
+
+<span class="kw">class</span> <span class="cl">Config</span>:
+    SECRET_KEY = os.getenv(<span class="st">"SECRET_KEY"</span>, <span class="st">"change-me-in-production"</span>)
+    SQLALCHEMY_DATABASE_URI = os.getenv(<span class="st">"DATABASE_URL"</span>, <span class="st">"sqlite:///recipes.db"</span>)
+    SQLALCHEMY_TRACK_MODIFICATIONS = <span class="kw">False</span></code></pre>
+      </div>
+    </section>
+
+    <hr class="section-div">
+
+    <section id="s4">
+      <div class="section-header"><span class="section-num">04</span><h2>The Form Flow: GET and POST</h2></div>
+      <p>
+        A form route usually handles two different moments. On <code>GET</code>, the route shows an empty form. On <code>POST</code>, the route receives submitted data. The route does not need two different functions. One route can handle both methods.
+      </p>
+      <div class="diagram-wrap">
+        <svg viewBox="0 0 820 210" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:820px;display:block;margin:0 auto">
+          <defs><marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#58a6ff"/></marker></defs>
+          <rect x="20" y="35" width="150" height="65" rx="8" fill="#1f2733" stroke="#30363d"/>
+          <text x="95" y="62" text-anchor="middle" fill="#c9d1d9" font-family="DM Sans" font-size="13">GET request</text>
+          <text x="95" y="82" text-anchor="middle" fill="#8b949e" font-family="DM Sans" font-size="11">show empty form</text>
+          <rect x="230" y="35" width="150" height="65" rx="8" fill="#1f2733" stroke="#30363d"/>
+          <text x="305" y="62" text-anchor="middle" fill="#c9d1d9" font-family="DM Sans" font-size="13">User fills form</text>
+          <text x="305" y="82" text-anchor="middle" fill="#8b949e" font-family="DM Sans" font-size="11">browser page</text>
+          <rect x="440" y="35" width="150" height="65" rx="8" fill="#1f2733" stroke="#30363d"/>
+          <text x="515" y="62" text-anchor="middle" fill="#c9d1d9" font-family="DM Sans" font-size="13">POST request</text>
+          <text x="515" y="82" text-anchor="middle" fill="#8b949e" font-family="DM Sans" font-size="11">submitted fields</text>
+          <rect x="650" y="35" width="150" height="65" rx="8" fill="#1f2733" stroke="#f0883e"/>
+          <text x="725" y="62" text-anchor="middle" fill="#f0883e" font-family="DM Sans" font-size="13" font-weight="600">Validate</text>
+          <text x="725" y="82" text-anchor="middle" fill="#8b949e" font-family="DM Sans" font-size="11">success or errors</text>
+          <line x1="172" y1="67" x2="228" y2="67" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#arr)"/>
+          <line x1="382" y1="67" x2="438" y2="67" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#arr)"/>
+          <line x1="592" y1="67" x2="648" y2="67" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#arr)"/>
+          <path d="M725 101 C725 155, 515 160, 515 112" fill="none" stroke="#ff7b72" stroke-width="1.4" marker-end="url(#arr)"/>
+          <text x="620" y="174" text-anchor="middle" fill="#ff7b72" font-family="DM Sans" font-size="12">if invalid: re-render with errors</text>
+          <path d="M725 101 C725 135, 790 145, 790 172" fill="none" stroke="#3fb950" stroke-width="1.4" marker-end="url(#arr)"/>
+          <text x="690" y="192" fill="#3fb950" font-family="DM Sans" font-size="12">if valid: save/flash/redirect</text>
+        </svg>
+        <p class="diagram-caption">Most Flask form routes are built around this small loop.</p>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-filename">generic form route pattern</div><div class="code-lang">python</div></div>
+        <pre><code><span class="fn">@bp.route</span>(<span class="st">"/some-form"</span>, methods=[<span class="st">"GET"</span>, <span class="st">"POST"</span>])
+<span class="kw">def</span> <span class="fn">some_form</span>():
+    form = <span class="cl">SomeForm</span>()
+
+    <span class="kw">if</span> form.validate_on_submit():
+        <span class="cm"># POST request + all validators passed</span>
+        <span class="cm"># do the useful action here</span>
+        flash(<span class="st">"Success!"</span>, <span class="st">"success"</span>)
+        <span class="kw">return</span> redirect(url_for(<span class="st">"main.some_page"</span>))
+
+    <span class="cm"># GET request, or POST request with validation errors</span>
+    <span class="kw">return</span> render_template(<span class="st">"some_form.html"</span>, form=form)</code></pre>
+      </div>
+    </section>
+
+    <hr class="section-div">
+
+    <section id="s5">
+      <div class="section-header"><span class="section-num">05</span><h2>In-Class Form 1: A Small Feedback Form</h2></div>
+      <p>
+        The first form should be intentionally small and low-risk. It will collect a name, an email address, a topic, and a message. We will not save it to the database yet. On success, we will flash a message and redirect. This lets us focus only on fields, validators, route flow, and template rendering.
+      </p>
+      <h3>Step 1: Create a forms file</h3>
+      <p>
+        A common structure is to place form classes in <code>app/forms.py</code> for a small app, or in a blueprint-specific file such as <code>app/main/forms.py</code> for a larger app. For this lesson, use the location that best matches the current project structure.
+      </p>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-filename">app/forms.py</div><div class="code-lang">python</div></div>
+        <pre><code><span class="kw">from</span> flask_wtf <span class="kw">import</span> <span class="cl">FlaskForm</span>
+<span class="kw">from</span> wtforms <span class="kw">import</span> <span class="cl">StringField</span>, <span class="cl">TextAreaField</span>, <span class="cl">SubmitField</span>
+<span class="kw">from</span> wtforms.validators <span class="kw">import</span> <span class="cl">DataRequired</span>, <span class="cl">Email</span>, <span class="cl">Length</span>
+
+
+<span class="kw">class</span> <span class="cl">FeedbackForm</span>(<span class="cl">FlaskForm</span>):
+    name = <span class="cl">StringField</span>(
+        <span class="st">"Name"</span>,
+        validators=[<span class="cl">DataRequired</span>(), <span class="cl">Length</span>(min=2, max=80)]
+    )
+    email = <span class="cl">StringField</span>(
+        <span class="st">"Email"</span>,
+        validators=[<span class="cl">DataRequired</span>(), <span class="cl">Email</span>(), <span class="cl">Length</span>(max=120)]
+    )
+    topic = <span class="cl">StringField</span>(
+        <span class="st">"Topic"</span>,
+        validators=[<span class="cl">DataRequired</span>(), <span class="cl">Length</span>(max=100)]
+    )
+    message = <span class="cl">TextAreaField</span>(
+        <span class="st">"Message"</span>,
+        validators=[<span class="cl">DataRequired</span>(), <span class="cl">Length</span>(min=10, max=500)]
+    )
+    submit = <span class="cl">SubmitField</span>(<span class="st">"Send Feedback"</span>)</code></pre>
+      </div>
+      <h3>Step 2: Add the route</h3>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-filename">app/routes.py</div><div class="code-lang">python</div></div>
+        <pre><code><span class="kw">from</span> flask <span class="kw">import</span> render_template, redirect, url_for, flash
+<span class="kw">from</span> .forms <span class="kw">import</span> <span class="cl">FeedbackForm</span>
+
+
+<span class="fn">@main_bp.route</span>(<span class="st">"/feedback"</span>, methods=[<span class="st">"GET"</span>, <span class="st">"POST"</span>])
+<span class="kw">def</span> <span class="fn">feedback</span>():
+    form = <span class="cl">FeedbackForm</span>()
+
+    <span class="kw">if</span> form.validate_on_submit():
+        flash(f<span class="st">"Thanks, {form.name.data}! We received your feedback."</span>, <span class="st">"success"</span>)
+        <span class="kw">return</span> redirect(url_for(<span class="st">"main_bp.feedback"</span>))
+
+    <span class="kw">return</span> render_template(<span class="st">"feedback.html"</span>, form=form)</code></pre>
+      </div>
+      <h3>Step 3: Render the template</h3>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-filename">templates/feedback.html</div><div class="code-lang">html</div></div>
+        <pre><code>{% extends <span class="st">"base.html"</span> %}
+
+{% block content %}
+&lt;section class=<span class="st">"auth-card"</span>&gt;
+  &lt;h1&gt;Feedback&lt;/h1&gt;
+  &lt;p class=<span class="st">"muted"</span>&gt;Use this form to practice Flask-WTF fields and validation.&lt;/p&gt;
+
+  &lt;form method=<span class="st">"POST"</span>&gt;
+    {{ form.hidden_tag() }}
+
+    &lt;div class=<span class="st">"form-group"</span>&gt;
+      {{ form.name.label }}
+      {{ form.name(class=<span class="st">"form-control"</span>, placeholder=<span class="st">"Your name"</span>) }}
+      {% for error in form.name.errors %}
+        &lt;div class=<span class="st">"field-error"</span>&gt;{{ error }}&lt;/div&gt;
+      {% endfor %}
+    &lt;/div&gt;
+
+    &lt;div class=<span class="st">"form-group"</span>&gt;
+      {{ form.email.label }}
+      {{ form.email(class=<span class="st">"form-control"</span>, placeholder=<span class="st">"you@example.com"</span>) }}
+      {% for error in form.email.errors %}
+        &lt;div class=<span class="st">"field-error"</span>&gt;{{ error }}&lt;/div&gt;
+      {% endfor %}
+    &lt;/div&gt;
+
+    &lt;div class=<span class="st">"form-group"</span>&gt;
+      {{ form.topic.label }}
+      {{ form.topic(class=<span class="st">"form-control"</span>, placeholder=<span class="st">"What is this about?"</span>) }}
+      {% for error in form.topic.errors %}
+        &lt;div class=<span class="st">"field-error"</span>&gt;{{ error }}&lt;/div&gt;
+      {% endfor %}
+    &lt;/div&gt;
+
+    &lt;div class=<span class="st">"form-group"</span>&gt;
+      {{ form.message.label }}
+      {{ form.message(class=<span class="st">"form-control"</span>, rows=<span class="st">"5"</span>, placeholder=<span class="st">"Write at least 10 characters..."</span>) }}
+      {% for error in form.message.errors %}
+        &lt;div class=<span class="st">"field-error"</span>&gt;{{ error }}&lt;/div&gt;
+      {% endfor %}
+    &lt;/div&gt;
+
+    {{ form.submit(class=<span class="st">"btn btn-primary btn-block"</span>) }}
+  &lt;/form&gt;
+&lt;/section&gt;
+{% endblock %}</code></pre>
+      </div>
+      <div class="checkpoint"><strong>Checkpoint:</strong> Submit the form with blank fields first. We should see validation errors. Then submit valid data and confirm the flash message appears.</div>
+    </section>
+
+    <hr class="section-div">
+
+    <section id="s6">
+      <div class="section-header"><span class="section-num">06</span><h2>Slow Down: What Happens When Validation Fails?</h2></div>
+      <p>
+        Validation failure is not an exception. It is a normal part of form handling. When a user forgets a required field or enters an invalid email address, <code>validate_on_submit()</code> returns <code>False</code>. The route reaches the final <code>render_template()</code> line again, but now the form object contains error messages.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>User action</th><th>Route result</th><th>What the template can show</th></tr></thead>
+          <tbody>
+            <tr><td>GET <code>/feedback</code></td><td><code>validate_on_submit()</code> is false</td><td>Empty form</td></tr>
+            <tr><td>POST blank form</td><td>Validators fail</td><td>Same form plus field errors</td></tr>
+            <tr><td>POST invalid email</td><td><code>Email()</code> fails</td><td>Error under email field</td></tr>
+            <tr><td>POST valid form</td><td>Validators pass</td><td>Flash message and redirect</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-info">
+        <div class="callout-title">Focus</div>
+        A failed validation should usually re-render the same form instead of redirecting. That way the form object still contains the submitted values and error messages.
+      </div>
+    </section>
+
+    <hr class="section-div">
+
+    <section id="s7">
+      <div class="section-header"><span class="section-num">07</span><h2>In-Class Form 2: Build a Recipe Form</h2></div>
+      <p>
+        Now that the mechanics are clear, we will recreate New Recipe form that you created in the homework exercise. This form will create a new recipe. The form object collects input. The route validates the input. If everything is valid, the route creates a <code>Recipe</code> model instance and commits it.
+      </p>
+      <div class="browser-card">
+        <div class="browser-top"><span></span><span></span><span></span><div class="browser-url">/recipes/new</div></div>
+        <div class="mock-form">
+          <h3>New Recipe</h3>
+          <p style="color:var(--muted);font-size:.88rem;margin-bottom:1rem;">Fill in the details below and click Save.</p>
+          <div class="mock-label">Title</div><div class="mock-input">Lentil Soup</div>
+          <div class="mock-label">Description</div><div class="mock-input">A simple weeknight soup</div>
+          <div class="mock-label">Instructions</div><div class="mock-input" style="min-height:60px;">Sauté onions, add lentils, simmer 25 min...</div>
+          <div class="mock-label">Prep Time (minutes)</div><div class="mock-input">35</div>
+          <div class="mock-button">Save Recipe</div>
+          <p style="margin-top:.75rem;font-size:.82rem;"><a href="#" style="color:var(--accent2);text-decoration:none;">← Cancel</a></p>
+        </div>
+      </div>
+      <h3>Step 1: Add the form class to the forms.py</h3>
+        <div class="callout-warning">Remove it from routes.py if you put it there while doing homework</div>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-filename">app/forms.py</div><div class="code-lang">python</div></div>
+        <pre><code><span class="kw">from</span> wtforms <span class="kw">import</span> <span class="cl">IntegerField</span>
+<span class="kw">from</span> wtforms.validators <span class="kw">import</span> <span class="cl">NumberRange</span>
+
+
+<span class="kw">class</span> <span class="cl">RecipeForm</span>(<span class="cl">FlaskForm</span>):
+    title = <span class="cl">StringField</span>(
+        <span class="st">"Title"</span>,
+        validators=[<span class="cl">DataRequired</span>(), <span class="cl">Length</span>(min=3, max=120)]
+    )
+    description = <span class="cl">TextAreaField</span>(
+        <span class="st">"Description"</span>,
+        validators=[<span class="cl">DataRequired</span>(), <span class="cl">Length</span>(min=10, max=300)]
+    )
+    instructions = <span class="cl">TextAreaField</span>(
+        <span class="st">"Instructions"</span>,
+        validators=[<span class="cl">DataRequired</span>(), <span class="cl">Length</span>(min=10)]
+    )
+    prep_time = <span class="cl">IntegerField</span>(
+        <span class="st">"Prep Time in Minutes"</span>,
+        validators=[<span class="cl">DataRequired</span>(), <span class="cl">NumberRange</span>(min=1, max=1440)]
+    )
+    submit = <span class="cl">SubmitField</span>(<span class="st">"Create Recipe"</span>)</code></pre>
+      </div>
+      <div class="callout callout-warning">
+        <div class="callout-title">Common Mistake</div>
+        A browser sends submitted values as text. <code>IntegerField</code> helps convert the value and report an error if the user types something that cannot be treated as an integer.
+      </div>
+    </section>
+
+    <hr class="section-div">
+
+    <section id="s8">
+      <div class="section-header"><span class="section-num">08</span><h2>Connect the Recipe Form to the Database</h2></div>
+      <p>
+        This route follows the same pattern as the feedback route. The difference is that success now creates a database record. If the application uses Flask-Login, this route should also require a logged-in user and should connect the new recipe to <code>current_user</code>.
+        <div class="mini-card">You already have it implemented in the routes.py</div>
+      </p>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-filename">app/routes.py</div><div class="code-lang">python</div></div>
+        <pre><code><span class="kw">from</span> flask_login <span class="kw">import</span> login_required, current_user
+<span class="kw">from</span> .extensions <span class="kw">import</span> db
+<span class="kw">from</span> .models <span class="kw">import</span> <span class="cl">Recipe</span>
+<span class="kw">from</span> .forms <span class="kw">import</span> <span class="cl">RecipeForm</span>
+
+
+<span class="fn">@main_bp.route</span>(<span class="st">"/recipes/new"</span>, methods=[<span class="st">"GET"</span>, <span class="st">"POST"</span>])
+<span class="fn">@login_required</span>
+<span class="kw">def</span> <span class="fn">new_recipe</span>():
+    form = <span class="cl">RecipeForm</span>()
+
+    <span class="kw">if</span> form.validate_on_submit():
+        recipe = <span class="cl">Recipe</span>(
+            title=form.title.data.strip(),
+            description=form.description.data.strip(),
+            instructions=form.instructions.data.strip(),
+            prep_time=form.prep_time.data,
+            author=current_user,
+        )
+        db.session.add(recipe)
+        db.session.commit()
+        flash(<span class="st">"Recipe created successfully."</span>, <span class="st">"success"</span>)
+        <span class="kw">return</span> redirect(url_for(<span class="st">"main_bp.get_recipe"</span>, recipe_id=recipe.id))
+
+    <span class="kw">return</span> render_template(<span class="st">"recipes/recipe_form.html"</span>, form=form, title=<span class="st">"New Recipe"</span>)</code></pre>
+      </div>
+      <h3>Template for the recipe form</h3>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-filename">app/templates/recipe_form.html</div><div class="code-lang">html</div></div>
+        <pre><code>{% extends <span class="st">"base.html"</span> %}
+
+{% block content %}
+&lt;section class=<span class="st">"recipe-form-card"</span>&gt;
+
+    &lt;h1&gt;New Recipe&lt;/h1&gt;
+    &lt;p class=<span class="st">"muted"</span>&gt;Fill in the details below and click Save.&lt;/p&gt;
+
+    &lt;form method=<span class="st">"POST"</span> action=<span class="st">"{{ url_for('main_bp.new_recipe') }}"</span>&gt;
+        {{ form.hidden_tag() }}
+
+        &lt;div class=<span class="st">"form-group"</span>&gt;
+            {{ form.title.label }}
+            {{ form.title(class=<span class="st">"form-control"</span>) }}
+            {% for error in form.title.errors %}
+              &lt;div class=<span class="st">"field-error"</span>&gt;{{ error }}&lt;/div&gt;
+            {% endfor %}
+        &lt;/div&gt;
+
+        &lt;div class=<span class="st">"form-group"</span>&gt;
+            {{ form.description.label }}
+            {{ form.description(class=<span class="st">"form-control"</span>) }}
+            {% for error in form.description.errors %}
+              &lt;div class=<span class="st">"field-error"</span>&gt;{{ error }}&lt;/div&gt;
+            {% endfor %}
+        &lt;/div&gt;
+
+        &lt;div class=<span class="st">"form-group"</span>&gt;
+            {{ form.instructions.label }}
+            {{ form.instructions(class=<span class="st">"form-control"</span>) }}
+            {% for error in form.instructions.errors %}
+              &lt;div class=<span class="st">"field-error"</span>&gt;{{ error }}&lt;/div&gt;
+            {% endfor %}
+        &lt;/div&gt;
+
+        &lt;div class=<span class="st">"form-group"</span>&gt;
+            {{ form.prep_time.label }}
+            {{ form.prep_time(class=<span class="st">"form-control"</span>) }}
+            {% for error in form.prep_time.errors %}
+              &lt;div class=<span class="st">"field-error"</span>&gt;{{ error }}&lt;/div&gt;
+            {% endfor %}
+        &lt;/div&gt;
+
+        {{ form.submit(class=<span class="st">"btn btn-primary btn-block"</span>) }}
+    &lt;/form&gt;
+
+    &lt;p class=<span class="st">"auth-switch"</span>&gt;
+        &lt;a href=<span class="st">"{{ url_for('main_bp.get_recipes') }}"</span>&gt;← Cancel&lt;/a&gt;
+    &lt;/p&gt;
+
+&lt;/section&gt;
+
+&lt;style&gt;
+    .recipe-form-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        box-shadow: var(--shadow);
+        max-width: 600px;
+        margin: 3rem auto;
+        padding: 2.5rem 2.25rem;
+    }
+    .recipe-form-card h1 { font-size: 1.6rem; margin-bottom: .35rem; }
+    .recipe-form-card .muted { color: var(--muted); font-size: .92rem; margin-bottom: 1.75rem; }
+    textarea.form-control { min-height: 110px; resize: vertical; }
+&lt;/style&gt;
+{% endblock %}</code></pre>
+      </div>
+      <div class="checkpoint"><strong>Checkpoint:</strong> Try to visit <code>/recipes/new</code> while logged out. Then log in and try again. Submit invalid data, then valid data.</div>
+    </section>
+
+    <hr class="section-div">
+
+    <section id="s9">
+      <div class="section-header"><span class="section-num">09</span><h2>Template Pattern: Repetition Is Normal at First</h2></div>
+      <p>
+        The templates above repeat the same pattern for every field: label, input, error loop. That repetition is useful while learning because it makes every part visible. Later, we can reduce repetition with Jinja macros. For today, we should keep the rendering explicit so we can see exactly how each field works.
+      </p>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-filename">field rendering pattern</div><div class="code-lang">html</div></div>
+        <pre><code>&lt;div class=<span class="st">"form-group"</span>&gt;
+  {{ form.some_field.label }}
+  {{ form.some_field(class=<span class="st">"form-control"</span>) }}
+  {% for error in form.some_field.errors %}
+    &lt;div class=<span class="st">"field-error"</span>&gt;{{ error }}&lt;/div&gt;
+  {% endfor %}
+&lt;/div&gt;</code></pre>
+      </div>
+      <details class="expand">
+        <summary>Optional refactor after the lesson: field macro</summary>
+        <div class="expand-body">
+          <p>After the form flow is comfortable, this repeated field pattern can be moved into a macro. That is useful in larger projects, but it can hide too much while we are first learning forms.</p>
+        </div>
+      </details>
+    </section>
+
+    <hr class="section-div">
+
+    <section id="s10">
+      <div class="section-header"><span class="section-num">10</span><h2>Testing the Form Flow</h2></div>
+      <p>
+        We can test forms with Flask's test client. In many tests, CSRF is disabled so the test can focus on our application behavior. We are not testing Flask-WTF itself. We are testing that our route, validation rules, model creation, and redirects work together.
+      </p>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-filename">tests/test_recipe_form.py</div><div class="code-lang">python</div></div>
+        <pre><code><span class="kw">def</span> <span class="fn">test_feedback_form_shows_validation_errors</span>(client):
+    response = client.post(<span class="st">"/feedback"</span>, data={
+        <span class="st">"name"</span>: <span class="st">""</span>,
+        <span class="st">"email"</span>: <span class="st">"not-an-email"</span>,
+        <span class="st">"topic"</span>: <span class="st">""</span>,
+        <span class="st">"message"</span>: <span class="st">"too short"</span>,
+    })
+
+    <span class="kw">assert</span> response.status_code == 200
+    <span class="kw">assert</span> b<span class="st">"field-error"</span> <span class="kw">in</span> response.data
+
+
+<span class="kw">def</span> <span class="fn">test_feedback_form_success_redirects</span>(client):
+    response = client.post(<span class="st">"/feedback"</span>, data={
+        <span class="st">"name"</span>: <span class="st">"Ari"</span>,
+        <span class="st">"email"</span>: <span class="st">"ari@example.com"</span>,
+        <span class="st">"topic"</span>: <span class="st">"Question"</span>,
+        <span class="st">"message"</span>: <span class="st">"This message is long enough."</span>,
+    }, follow_redirects=<span class="kw">True</span>)
+
+    <span class="kw">assert</span> response.status_code == 200
+    <span class="kw">assert</span> b<span class="st">"received your feedback"</span> <span class="kw">in</span> response.data</code></pre>
+      </div>
+      <div class="callout callout-info">
+        <div class="callout-title">Test Setup Reminder</div>
+        In the test configuration, set <code>WTF_CSRF_ENABLED = False</code>. Otherwise the test client must include a valid CSRF token with each POST request.
+      </div>
+    </section>
+
+    <hr class="section-div">
+
+    <section id="s11">
+      <div class="section-header"><span class="section-num">11</span><h2>In-Class Form 3 Build a Profile Form</h2></div>
+      <p>
+        Now you will build one more form with minimum guidance. The assignment is intentionally structured so the form design is not the hard part. A template skeleton is provided, but the Python form class, route logic, and model connection should be completed independently.
+      </p>
+      <div class="homework-card">
+        <h3>Assignment: Add a Profile Form</h3>
+        <p>Create a page where a logged-in user can add or update a simple profile for the RecipeShare app.</p>
+        <p>Use a protected route at <code>/api/profile</code> (or your app's equivalent profile route) so users can access the form directly.</p>
+        <h4>Required fields</h4>
+        <ul class="normal">
+          <li><code>display_name</code>: required, 2–80 characters</li>
+          <li><code>bio</code>: optional, maximum 300 characters</li>
+          <li><code>favorite_cuisine</code>: optional, maximum 80 characters</li>
+          <li><code>years_cooking</code>: optional integer from 0 to 100</li>
+        </ul>
+        <h4>Required behavior</h4>
+        <ul class="normal">
+          <li>The route must require login.</li>
+          <li>Add a <code>Profile</code> link in the authenticated navbar that points to this route.</li>
+          <li>A GET request should display the form.</li>
+          <li>A POST request should validate the form.</li>
+          <li>Invalid submissions should show field-level error messages.</li>
+          <li>Valid submissions should save the profile and flash a success message.</li>
+          <li>The template must use the provided skeleton below. You may adjust wording, but should not redesign the page from scratch.</li>
+        </ul>
+      </div>
+      <h3>Suggested model</h3>
+      <p>This is the minimum structure. Use the naming conventions of the existing application if they differ.</p>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-filename">app/models.py</div><div class="code-lang">python</div></div>
+        <pre><code><span class="kw">class</span> <span class="cl">Profile</span>(db.Model):
+    id = db.Column(db.Integer, primary_key=<span class="kw">True</span>)
+    display_name = db.Column(db.String(80), nullable=<span class="kw">False</span>)
+    bio = db.Column(db.String(300))
+    favorite_cuisine = db.Column(db.String(80))
+    years_cooking = db.Column(db.Integer)
+
+    user_id = db.Column(db.Integer, db.ForeignKey(<span class="st">"user.id"</span>), nullable=<span class="kw">False</span>, unique=<span class="kw">True</span>)
+    user = db.relationship(<span class="st">"User"</span>, backref=db.backref(<span class="st">"profile"</span>, uselist=<span class="kw">False</span>))</code></pre>
+      </div>
+      <h3>Template skeleton to use</h3>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-filename">templates/profile_form.html</div><div class="code-lang">html</div></div>
+        <pre><code>{% extends <span class="st">"base.html"</span> %}
+
+{% block content %}
+&lt;section class=<span class="st">"auth-card"</span>&gt;
+  &lt;h1&gt;My Profile&lt;/h1&gt;
+  &lt;p class=<span class="st">"muted"</span>&gt;Tell other users a little about your cooking style.&lt;/p&gt;
+
+  &lt;form method=<span class="st">"POST"</span>&gt;
+    {{ form.hidden_tag() }}
+
+    &lt;div class=<span class="st">"form-group"</span>&gt;
+      {{ form.display_name.label }}
+      {{ form.display_name(class=<span class="st">"form-control"</span>, placeholder=<span class="st">"Display name"</span>) }}
+      {% for error in form.display_name.errors %}
+        &lt;div class=<span class="st">"field-error"</span>&gt;{{ error }}&lt;/div&gt;
+      {% endfor %}
+    &lt;/div&gt;
+
+    &lt;div class=<span class="st">"form-group"</span>&gt;
+      {{ form.bio.label }}
+      {{ form.bio(class=<span class="st">"form-control"</span>, rows=<span class="st">"4"</span>, placeholder=<span class="st">"Short bio"</span>) }}
+      {% for error in form.bio.errors %}
+        &lt;div class=<span class="st">"field-error"</span>&gt;{{ error }}&lt;/div&gt;
+      {% endfor %}
+    &lt;/div&gt;
+
+    &lt;div class=<span class="st">"form-group"</span>&gt;
+      {{ form.favorite_cuisine.label }}
+      {{ form.favorite_cuisine(class=<span class="st">"form-control"</span>, placeholder=<span class="st">"Italian, Israeli, Mexican, etc."</span>) }}
+      {% for error in form.favorite_cuisine.errors %}
+        &lt;div class=<span class="st">"field-error"</span>&gt;{{ error }}&lt;/div&gt;
+      {% endfor %}
+    &lt;/div&gt;
+
+    &lt;div class=<span class="st">"form-group"</span>&gt;
+      {{ form.years_cooking.label }}
+      {{ form.years_cooking(class=<span class="st">"form-control"</span>, placeholder=<span class="st">"Example: 5"</span>) }}
+      {% for error in form.years_cooking.errors %}
+        &lt;div class=<span class="st">"field-error"</span>&gt;{{ error }}&lt;/div&gt;
+      {% endfor %}
+    &lt;/div&gt;
+
+    {{ form.submit(class=<span class="st">"btn btn-primary btn-block"</span>) }}
+  &lt;/form&gt;
+&lt;/section&gt;
+{% endblock %}</code></pre>
+      </div>
+      <div class="callout callout-danger">
+        <div class="callout-title">Academic Integrity Note</div>
+        The purpose of this assignment is to practice recognizing and applying the form pattern. You should use the lesson examples, notes, documentation, and the provided template skeleton, but should write the form class and route logic themselves.
+      </div>
+      <h3>Submission checklist</h3>
+      <ul class="normal">
+        <li>A <code>ProfileForm</code> class with appropriate fields and validators.</li>
+        <li>A protected route such as <code>/profile</code> or <code>/profile/edit</code>.</li>
+        <li>A visible authenticated navbar link (for example, <code>Profile</code>) that opens the profile form route.</li>
+        <li>A database model or model update, plus migration if the project uses Flask-Migrate.</li>
+        <li>A working template based on the provided skeleton.</li>
+        <li>At least two tests: one successful submission and one validation failure.</li>
+      </ul>
+    </section>
+
+    <hr class="section-div">
+
+    <section id="s12">
+      <div class="section-header"><span class="section-num">12</span><h2>End-of-Lesson Checklist</h2></div>
+      <p>By the end of this lesson, we should be able to explain and build a simple Flask form from beginning to end.</p>
+      <ul class="step-list">
+        <li>We can explain the difference between a browser form, a Flask route, a WTForms form class, and a SQLAlchemy model.</li>
+        <li>We can install Flask-WTF and configure a secret key for CSRF protection.</li>
+        <li>We can create fields using <code>StringField</code>, <code>TextAreaField</code>, <code>IntegerField</code>, and <code>SubmitField</code>.</li>
+        <li>We can attach validators such as <code>DataRequired</code>, <code>Email</code>, <code>Length</code>, and <code>NumberRange</code>.</li>
+        <li>We can write a route that handles both <code>GET</code> and <code>POST</code>.</li>
+        <li>We can use <code>form.validate_on_submit()</code> to separate valid submissions from empty forms and invalid submissions.</li>
+        <li>We can render <code>{{ form.hidden_tag() }}</code>, labels, fields, submit buttons, and validation errors in Jinja.</li>
+        <li>We can create a database object from valid form data and commit it.</li>
+        <li>We can protect form routes with <code>@login_required</code> when the action belongs to an authenticated user.</li>
+        <li>We can test form submissions with Flask's test client.</li>
+      </ul>
+      <div class="callout callout-success">
+        <div class="callout-title">Big Picture</div>
+        Flask forms are not a separate world from routes and models. They are the bridge between a browser user and backend application logic. Once the pattern is clear, registration forms, recipe forms, profile forms, search forms, and edit forms all become variations of the same structure.
+      </div>
+    </section>
+
+  </main>
+</div>
+
+</body>
+</html>
