@@ -863,9 +863,10 @@ WTForms==3.2.1
       <div class="section-header"><span class="section-num">10</span><h2>Testing the Form Flow</h2></div>
       <p>
         We can test forms with Flask's test client. In many tests, CSRF is disabled so the test can focus on our application behavior. We are not testing Flask-WTF itself. We are testing that our route, validation rules, model creation, and redirects work together.
+        add two tests below to your test_main_routes.py file to confirm that the feedback form shows validation errors and accepts valid submissions.
       </p>
       <div class="code-block">
-        <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-filename">tests/test_recipe_form.py</div><div class="code-lang">python</div></div>
+        <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-filename">tests/test_main_routes.py</div><div class="code-lang">python</div></div>
         <pre><code><span class="kw">def</span> <span class="fn">test_feedback_form_shows_validation_errors</span>(client):
     response = client.post(<span class="st">"/feedback"</span>, data={
         <span class="st">"name"</span>: <span class="st">""</span>,
@@ -935,9 +936,136 @@ WTForms==3.2.1
     favorite_cuisine = db.Column(db.String(80))
     years_cooking = db.Column(db.Integer)
 
-    user_id = db.Column(db.Integer, db.ForeignKey(<span class="st">"user.id"</span>), nullable=<span class="kw">False</span>, unique=<span class="kw">True</span>)
+    user_id = db.Column(db.Integer, db.ForeignKey(<span class="st">"users.id"</span>), nullable=<span class="kw">False</span>, unique=<span class="kw">True</span>)
     user = db.relationship(<span class="st">"User"</span>, backref=db.backref(<span class="st">"profile"</span>, uselist=<span class="kw">False</span>))</code></pre>
       </div>
+        <details class="expand" style="margin: 1.5rem 0;">
+            <summary>Flask-SQLAlchemy ORM Relationships: backref vs back_populates</summary>
+            <div class="expand-body">
+                <p>
+                    When you define a relationship between two models, SQLAlchemy needs to know how to navigate
+                    in <em>both directions</em>. If <code>Recipe</code> belongs to a <code>User</code>, you
+                    probably want to ask <code>recipe.author</code> <strong>and</strong>
+                    <code>user.recipes</code>. There are two ways to set that up.
+                </p>
+
+                <h4>backref &mdash; shorthand, one-sided declaration</h4>
+                <p>
+                    <code>backref</code> is a convenience argument. You declare the relationship on
+                    <strong>one</strong> model and SQLAlchemy automatically creates the reverse accessor on
+                    the other model for you. You do <em>not</em> write anything in the second model class.
+                </p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <div class="code-dots"><span></span><span></span><span></span></div>
+                        <div class="code-filename">backref example</div>
+                        <div class="code-lang">python</div>
+                    </div>
+                    <pre><code><span class="kw">class</span> <span class="cl">User</span>(db.Model):
+    id    = db.Column(db.Integer, primary_key=<span class="kw">True</span>)
+    name  = db.Column(db.String(80))
+
+<span class="kw">class</span> <span class="cl">Recipe</span>(db.Model):
+    id        = db.Column(db.Integer, primary_key=<span class="kw">True</span>)
+    title     = db.Column(db.String(120))
+    author_id = db.Column(db.Integer, db.ForeignKey(<span class="st">"users.id"</span>))
+
+    <span class="cm"># backref creates user.recipes automatically on the User side</span>
+    author = db.relationship(<span class="st">"User"</span>, backref=<span class="st">"recipes"</span>)
+
+
+<span class="cm"># Usage</span>
+recipe.author        <span class="cm"># → User object</span>
+user.recipes         <span class="cm"># → list of Recipe objects (created by backref)</span></code></pre>
+                </div>
+
+                <h4>back_populates &mdash; explicit, two-sided declaration</h4>
+                <p>
+                    <code>back_populates</code> requires you to declare the relationship on
+                    <strong>both</strong> models and point each one at the other by name. It is more
+                    verbose but also more explicit: both sides are visible when reading either model
+                    class. This is preferred in larger codebases where clarity matters more than brevity.
+                </p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <div class="code-dots"><span></span><span></span><span></span></div>
+                        <div class="code-filename">back_populates example</div>
+                        <div class="code-lang">python</div>
+                    </div>
+                    <pre><code><span class="kw">class</span> <span class="cl">User</span>(db.Model):
+    id      = db.Column(db.Integer, primary_key=<span class="kw">True</span>)
+    name    = db.Column(db.String(80))
+
+    <span class="cm"># explicitly declare the reverse side here</span>
+    recipes = db.relationship(<span class="st">"Recipe"</span>, back_populates=<span class="st">"author"</span>)
+
+<span class="kw">class</span> <span class="cl">Recipe</span>(db.Model):
+    id        = db.Column(db.Integer, primary_key=<span class="kw">True</span>)
+    title     = db.Column(db.String(120))
+    author_id = db.Column(db.Integer, db.ForeignKey(<span class="st">"users.id"</span>))
+
+    <span class="cm"># explicitly declare the forward side here</span>
+    author = db.relationship(<span class="st">"User"</span>, back_populates=<span class="st">"recipes"</span>)
+
+
+<span class="cm"># Usage — identical to backref</span>
+recipe.author        <span class="cm"># → User object</span>
+user.recipes         <span class="cm"># → list of Recipe objects</span></code></pre>
+                </div>
+
+                <div class="table-wrap" style="margin-top:1.25rem;">
+                    <table>
+                        <thead>
+                        <tr><th>Feature</th><th>backref</th><th>back_populates</th></tr>
+                        </thead>
+                        <tbody>
+                        <tr><td>Lines of code</td><td>One model only</td><td>Both models</td></tr>
+                        <tr><td>Visibility</td><td>Reverse side is invisible in the second class</td><td>Both sides are explicit and readable</td></tr>
+                        <tr><td>Error feedback</td><td>Typos in the backref name are silent until runtime</td><td>Mismatched names raise an error immediately</td></tr>
+                        <tr><td>Common use</td><td>Small apps, quick prototypes</td><td>Larger apps, team codebases, cleaner models</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="callout callout-warning" style="margin-top:1.25rem;">
+                    <div class="callout-title">Do Not Mix Them</div>
+                    Never use both <code>backref</code> and <code>back_populates</code> for the same
+                    relationship. SQLAlchemy will raise a conflict error because the reverse accessor
+                    would be registered twice.
+                </div>
+
+                <h4>One-to-one relationships</h4>
+                <p>
+                    The <code>Profile</code> model from the assignment uses a one-to-one relationship.
+                    Add <code>uselist=False</code> on the side that should return a single object instead
+                    of a list.
+                </p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <div class="code-dots"><span></span><span></span><span></span></div>
+                        <div class="code-filename">one-to-one with back_populates</div>
+                        <div class="code-lang">python</div>
+                    </div>
+                    <pre><code><span class="kw">class</span> <span class="cl">User</span>(db.Model):
+    id      = db.Column(db.Integer, primary_key=<span class="kw">True</span>)
+    profile = db.relationship(<span class="st">"Profile"</span>, back_populates=<span class="st">"user"</span>, uselist=<span class="kw">False</span>)
+
+<span class="kw">class</span> <span class="cl">Profile</span>(db.Model):
+    id      = db.Column(db.Integer, primary_key=<span class="kw">True</span>)
+    user_id = db.Column(db.Integer, db.ForeignKey(<span class="st">"users.id"</span>), unique=<span class="kw">True</span>)
+    user    = db.relationship(<span class="st">"User"</span>, back_populates=<span class="st">"profile"</span>)
+
+
+<span class="cm"># Usage</span>
+user.profile         <span class="cm"># → single Profile object (not a list)</span>
+profile.user         <span class="cm"># → single User object</span></code></pre>
+                </div>
+            </div>
+        </details>
+
       <h3>Template skeleton to use</h3>
       <div class="code-block">
         <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-filename">templates/profile_form.html</div><div class="code-lang">html</div></div>

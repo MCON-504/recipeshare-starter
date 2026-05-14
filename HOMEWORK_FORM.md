@@ -220,24 +220,16 @@ The route should:
 
 Should a user be allowed to review the same recipe more than once?
 
-For this homework, choose one of these approaches:
+For this assignment we will allow a user to provide multiple reviews.
+But let's discuss the implications of this design choice:
+- Pros of allowing multiple reviews:
+  - Users can update their opinions over time by submitting new reviews.
+  - It simplifies the form logic since we don't need to check for existing reviews.
+- Cons of allowing multiple reviews:
+  - It may lead to clutter if users submit many reviews for the same recipe.
+- Alternative design:
+  - If we wanted to restrict to one review per user per recipe, we would need to check for an existing review in the route and either update it or prevent submission.
 
-**Option A: Simpler version**
-
-Allow multiple reviews from the same user for the same recipe.
-
-This is easier and acceptable for this assignment.
-
-**Option B: More realistic version**
-
-Allow only one review per user per recipe.
-
-If you choose this option, your route should check whether the current user already reviewed this recipe. If a review already exists, the route should either:
-
-- redirect with a flash message, or
-- update the existing review instead of creating a new one
-
-Option B is a little more challenging. Option A is enough for full credit unless your instructor says otherwise.
 
 ---
 
@@ -269,7 +261,7 @@ A reasonable design is:
 Create this file:
 
 ```text
-templates/recipes/review_form.html
+templates/review_form.html
 ```
 
 Use the template below. You may adjust small wording, but do not redesign the page from scratch.
@@ -368,6 +360,56 @@ The recipe detail page should show each review's:
 
 You may keep this display simple. The main homework goal is the form flow, not front-end design.
 
+Below are some styles you can use to make the reviews look a bit nicer. You can adjust the styles as needed.
+
+```html
+<style>
+  .recipe-detail { max-width: 720px; margin: 2rem auto; }
+
+  .recipe-detail h1 { font-size: 1.9rem; font-weight: 800; margin-bottom: .5rem; }
+  .recipe-detail h2 { font-size: 1.2rem; font-weight: 700; margin: 1.75rem 0 .6rem; }
+
+  .recipe-meta         { font-size: .85rem; color: var(--muted); margin-bottom: 1.25rem; }
+  .recipe-description  { color: var(--text); margin-bottom: 1rem; line-height: 1.7; }
+  .recipe-instructions { white-space: pre-wrap; line-height: 1.8; color: var(--text); }
+
+  .btn-review {
+    display: inline-block;
+    margin-top: 1.5rem;
+    background: var(--brand);
+    color: #fff;
+    padding: .5rem 1.1rem;
+    border-radius: 7px;
+    font-size: .9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background .15s;
+  }
+  .btn-review:hover { background: var(--brand-dark); }
+
+  .reviews-section { margin-top: 2.5rem; }
+
+  .review-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .review-header {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    margin-bottom: .5rem;
+  }
+
+  .review-rating  { color: var(--accent); font-size: 1.05rem; letter-spacing: .05em; }
+  .review-meta    { font-size: .82rem; color: var(--muted); }
+  .review-comment { color: var(--text); line-height: 1.65; margin: 0; }
+  .no-reviews     { color: var(--muted); font-size: .92rem; margin-top: .5rem; }
+</style>
+```
 ---
 
 ## Part 8: Testing Guidance
