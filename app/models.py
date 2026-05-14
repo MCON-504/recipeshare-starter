@@ -61,3 +61,13 @@ class Recipe(db.Model):
             "created_at": self.created_at.isoformat(),
             "user_id": self.user_id,
         }
+class Profile(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    display_name = db.Column(db.String(80), nullable=False)
+    bio = db.Column(db.String(300))
+    favorite_cuisine = db.Column(db.String(80))
+    years_cooking = db.Column(db.Integer)
+
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, unique=True)
+    user = db.relationship("User", backref=db.backref("profile", uselist=False))
+

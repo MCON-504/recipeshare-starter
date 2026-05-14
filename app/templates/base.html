@@ -213,6 +213,7 @@
             {% else %}
                 <a href="{{ url_for('auth.login') }}">Login</a>
                 <a href="{{ url_for('auth.register') }}" class="btn-nav">Register</a>
+                <a href = "{{url_for('main_bp.feedback')}}" class = "btn-nav">Feedback</a>
             {% endif %}
         </div>
     </div>

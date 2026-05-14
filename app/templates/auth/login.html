@@ -5,7 +5,7 @@
     <h1>Log In</h1>
     <p class="muted">Welcome back! Log in to manage your recipes.</p>
 
-    <form method="POST" action="{{ url_for('auth.login') }}">
+    <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next')) }}">
         {{ form.hidden_tag() }}
 
         <div class="form-group">

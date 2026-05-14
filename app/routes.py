@@ -3,6 +3,8 @@ from flask_login import login_required, current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, IntegerField, SubmitField
 from wtforms.validators import DataRequired, Length, NumberRange
+from flask import render_template, redirect, url_for, flash
+from .forms import FeedbackForm
 
 from .extensions import db
 from .models import Recipe
@@ -127,3 +129,15 @@ def new_recipe():
     # TODO: render the recipe_form.html template, passing the form
 
     return render_template("recipe_form.html", form = form)
+
+
+
+@main_bp.route("/feedback", methods=["GET", "POST"])
+def feedback():
+    form = FeedbackForm()
+
+    if form.validate_on_submit():
+        flash(f"Thanks, {form.name.data}! We received your feedback.", "success")
+        return redirect(url_for("main_bp.feedback"))
+
+    return render_template("feedback.html", form=form)

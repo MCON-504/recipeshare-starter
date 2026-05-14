@@ -76,7 +76,7 @@ def login():
         flash(f"Welcome back, {user.username}! You are now logged in.", "success")
 
         # TODO: read the `next` query parameter
-        next_url = request.args.get("next")
+        next_url = request.args.get("next") or None
 
         # TODO: redirect to next_url if it is safe, otherwise get_recipes
         if is_safe_url(next_url):
