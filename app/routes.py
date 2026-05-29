@@ -1,5 +1,8 @@
-from flask import Blueprint, jsonify, request, render_template
+from flask import Blueprint, jsonify, request, render_template, flash, redirect, url_for
 from flask_login import login_required, current_user
+from flask_wtf import FlaskForm
+from wtforms import StringField, TextAreaField, IntegerField, SubmitField
+from wtforms.validators import DataRequired, Length, NumberRange
 
 from .extensions import db
 from .models import Recipe
@@ -23,7 +26,10 @@ def get_recipes():
 @main_bp.route("/recipes/<int:recipe_id>", methods=["GET"])
 def get_recipe(recipe_id: int):
     recipe = Recipe.query.get_or_404(recipe_id)
-    return jsonify(recipe.to_dict())
+    if request.is_json:
+        return jsonify(recipe.to_dict())
+    else:
+        return render_template("recipe_detail.html", recipe=recipe)
 
 
 @main_bp.route("/recipes", methods=["POST"])
@@ -77,3 +83,47 @@ def delete_recipe(recipe_id: int):
     db.session.commit()
     return "", 204
 
+class RecipeForm(FlaskForm):
+    title = StringField(
+        "Title",
+        validators=[DataRequired(), Length(max=150)]
+    )
+    description = TextAreaField(
+        "Description",
+        validators=[DataRequired()]
+    )
+    instructions = TextAreaField(
+        "Instructions",
+        validators=[DataRequired()]
+    )
+    prep_time = IntegerField(
+        "Prep Time (minutes)",
+        validators=[DataRequired(), NumberRange(min=1)]
+    )
+    submit = SubmitField("Save Recipe")
+
+
+# ── New route ──────────────────────────────────────────────────────────────────
+@main_bp.route("/recipes/new", methods=["GET", "POST"])
+@login_required
+def new_recipe():
+    form = RecipeForm()
+
+    if form.validate_on_submit():
+        # TODO: create a Recipe from form data and save it
+           recipe = Recipe(
+               title = form.title.data,
+               description = form.description.data,
+               instructions= form.instructions.data,
+               prep_time= form.prep_time.data,
+               author=current_user,
+           )
+           db.session.add(recipe)
+           db.session.commit()
+           flash("Recipe created!", "success")
+           return redirect(url_for("main_bp.get_recipe", recipe_id=recipe.id))
+
+
+    # TODO: render the recipe_form.html template, passing the form
+
+    return render_template("recipe_form.html", form = form)

@@ -19,15 +19,16 @@ def is_safe_url(target: str) -> bool:
     """
     # TODO: implement using urlparse
     #   hint: a safe URL has no netloc and its path starts with "/"
-    pass
+    parsed = urlparse(target)
+    return not parsed.netloc and parsed.path.startswith("/")
 
 
 # ── Login route (HTML form path only) ─────────────────────────────────────────
 # Paste this block into the existing login() function, replacing the
 # "# ── HTML form path ──" section.
 
-    # ── HTML form path ───────────────────────────────────────────────────────
-    form = LoginForm()
+# ── HTML form path ───────────────────────────────────────────────────────
+    # form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
         if user is None or not user.verify_password(form.password.data):
