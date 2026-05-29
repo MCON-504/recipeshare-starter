@@ -205,6 +205,7 @@
         <div class="nav-links">
             <a href="{{ url_for('home') }}">Recipes</a>
             {% if current_user.is_authenticated %}
+            <a href="{{url_for('main_bp.profile')}}">Profile</a>
                 <span class="nav-user">Hi, {{ current_user.username }}</span>
                 <form method="POST" action="{{ url_for('auth.logout') }}" class="inline-form">
                     {% if config.WTF_CSRF_ENABLED %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}

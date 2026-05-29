@@ -4,8 +4,9 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, IntegerField, SubmitField
 from wtforms.validators import DataRequired, Length, NumberRange
 from flask import render_template, redirect, url_for, flash
-from .forms import FeedbackForm
-
+from .forms import FeedbackForm, ProfileForm
+from app.forms import ProfileForm
+from app.models import Profile
 from .extensions import db
 from .models import Recipe
 
@@ -141,3 +142,25 @@ def feedback():
         return redirect(url_for("main_bp.feedback"))
 
     return render_template("feedback.html", form=form)
+
+@main_bp.route("/profile", methods = ["GET", "POST"])
+@login_required
+def profile():
+    profile = current_user.profile
+    form = ProfileForm(obj = profile)
+
+    if form.validate_on_submit():
+        if profile is None:
+            profile = Profile(user = current_user)
+            db.session.add(profile)
+
+        profile.display_name = form.display_name.data.strip()
+        profile.bio = form.bio.data.strip()
+        profile.favorite_cuisine = form.favorite_cuisine.data.strip()
+        profile.years_of_cooking = form.years_of_cooking.data
+
+        db.session.commit()
+        flash("Profile saved sucessfully.", "sucess")
+        return redirect(url_for("main_bp.profile"))
+
+    return render_template("profile_form.html", form = form)
