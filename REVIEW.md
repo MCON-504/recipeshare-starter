@@ -1,4 +1,4 @@
-# Homework: Add a Recipe Review Form to RecipeShare
+#  Add a Recipe Review Form to RecipeShare
 
 ## Goal
 
