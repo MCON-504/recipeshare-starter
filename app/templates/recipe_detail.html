@@ -32,7 +32,51 @@
         Recipe instructions: {{recipe.instructions}}
     </div>
 
-    <a href="{{ url_for('main_bp.get_recipes') }}" class="btn btn-back">
+    {% if current_user.is_authenticated %}
+    <a href="{{ url_for('main_bp.recipe_rating', recipe_id=recipe.id) }}"
+       class="btn btn-primary">
+        Write a Review
+    </a>
+    {% else %}
+    <p>
+        <a href="{{ url_for('auth.login') }}">
+            Log in to write a review
+        </a>
+    </p>
+    {% endif %}
+
+    <section class="recipe-reviews">
+        <h2>Reviews</h2>
+
+        {% if recipe.reviews %}
+
+        {% for review in recipe.reviews %}
+        <div class="review-card">
+
+            <p>
+                <strong>Rating:</strong>
+                {{ review.rating }}/5
+            </p>
+
+            <p>{{ review.comment }}</p>
+
+            <p class="text-muted">
+                By {{ review.user.username }}
+                {% if review.created_at %}
+                on {{ review.created_at.strftime('%Y-%m-%d') }}
+                {% endif %}
+            </p>
+
+        </div>
+        <hr>
+        {% endfor %}
+
+        {% else %}
+        <p>No reviews yet.</p>
+        {% endif %}
+    </section>
+
+    <a href="{{ url_for('main_bp.get_recipe', recipe_id=recipe.id) }}">
         ← Back to recipes
     </a>
 

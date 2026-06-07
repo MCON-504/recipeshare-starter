@@ -5,7 +5,7 @@ from flask_login import LoginManager
 # Extensions are created here and initialized in the app factory.
 
 # SQLAlchemy instance (database connection and ORM)
-db = SQLAlchemy()
+db: SQLAlchemy = SQLAlchemy()
 # set up Flask-Migrate (database migrations)
 migrate = Migrate()
 # set up Flask-Login (user session management)

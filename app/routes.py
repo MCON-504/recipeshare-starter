@@ -1,12 +1,14 @@
-from flask import Blueprint, jsonify, request, render_template, flash, redirect, url_for
+import recipe
+from dotenv import main
+from flask import Blueprint, jsonify, request, render_template, flash, redirect, url_for, abort
 from flask_login import login_required, current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, IntegerField, SubmitField
 from wtforms.validators import DataRequired, Length, NumberRange
 from flask import render_template, redirect, url_for, flash
-from .forms import FeedbackForm, ProfileForm
+from .forms import FeedbackForm, ProfileForm, RecipeReviewForm
 from app.forms import ProfileForm
-from app.models import Profile
+from app.models import Profile, RecipeReview
 from .extensions import db
 from .models import Recipe
 
@@ -18,12 +20,17 @@ def api_home():
     return jsonify({"message": "RecipeShare API is running"})
 
 
-@main_bp.route("/recipes", methods=["GET"])
+@main_bp.route("/api/recipes", methods=["GET"])
+def get_api_recipes():
+    recipes = Recipe.query.order_by(Recipe.created_at.desc()).all()
+    return jsonify([r.to_dict() for r in recipes]), 200
+
+@main_bp.route("/recipes", methods = ["GET"])
 def get_recipes():
     recipes = Recipe.query.order_by(Recipe.created_at.desc()).all()
     if request.is_json:
-        return jsonify([recipe.to_dict() for recipe in recipes])
-    return render_template("home.html", recipes=recipes)
+        return jsonify([recipee.to_dict() for recipee in recipes])
+    return render_template("home.html", recipes = recipes)
 
 
 @main_bp.route("/recipes/<int:recipe_id>", methods=["GET"])
@@ -113,18 +120,18 @@ def new_recipe():
     form = RecipeForm()
 
     if form.validate_on_submit():
-        # TODO: create a Recipe from form data and save it
-           recipe = Recipe(
-               title = form.title.data,
-               description = form.description.data,
-               instructions= form.instructions.data,
-               prep_time= form.prep_time.data,
-               author=current_user,
-           )
-           db.session.add(recipe)
-           db.session.commit()
-           flash("Recipe created!", "success")
-           return redirect(url_for("main_bp.get_recipe", recipe_id=recipe.id))
+        recipe = Recipe(
+            title=form.title.data,
+            description=form.description.data,
+            instructions=form.instructions.data,
+            prep_time=form.prep_time.data,
+            author=current_user
+        )
+        db.session.add(recipe)
+        db.session.commit()
+
+        flash("Recipe created!", "success")
+        return redirect(url_for("main_bp.get_recipe", recipe_id=recipe.id))
 
 
     # TODO: render the recipe_form.html template, passing the form
@@ -155,7 +162,7 @@ def profile():
             db.session.add(profile)
 
         profile.display_name = form.display_name.data.strip()
-        profile.bio = form.bio.data.strip()
+        profile.bio = form.bio.data
         profile.favorite_cuisine = form.favorite_cuisine.data.strip()
         profile.years_of_cooking = form.years_of_cooking.data
 
@@ -164,3 +171,33 @@ def profile():
         return redirect(url_for("main_bp.profile"))
 
     return render_template("profile_form.html", form = form)
+
+@main_bp.route("/recipes/<int:recipe_id>/review", methods = ["GET", "POST"])
+@login_required
+def recipe_rating(recipe_id):
+    recipe = db.session.get(Recipe, recipe_id)
+    if not recipe:
+        abort(404)
+    form = RecipeReviewForm()
+
+    if form.validate_on_submit():
+        recipereview = RecipeReview()
+
+        recipereview.rating = form.rating.data
+        recipereview.comment = form.comment.data.strip()
+        recipereview.recipe_id = recipe_id
+        recipereview.user_id = current_user.id
+
+        db.session.add(recipereview)
+        db.session.commit()
+        flash("Sucess!Welcome!")
+
+        return redirect(url_for("main_bp.get_recipe", recipe_id = recipe.id))
+
+
+    return render_template("review_form.html", form= form, recipe= recipe)
+
+
+
+
+

@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, jsonify, render_template
 
 from .config import Config
 from .extensions import db, migrate, login_manager
@@ -8,7 +8,6 @@ def create_app(test_config: dict | None = None) -> Flask:
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # Allow tests (or other callers) to override config before extensions bind
     if test_config:
         app.config.update(test_config)
 
@@ -20,6 +19,12 @@ def create_app(test_config: dict | None = None) -> Flask:
     login_manager.login_message_category = "warning"
     login_manager.init_app(app)
 
+    # ✅ FIX: prevent 302 redirects (this is what your tests need)
+    @login_manager.unauthorized_handler
+    def unauthorized():
+        return jsonify({"error": "unauthorized"}), 401
+
+    # register blueprints
     from .routes import main_bp
     app.register_blueprint(main_bp, url_prefix="/api")
 
@@ -27,7 +32,6 @@ def create_app(test_config: dict | None = None) -> Flask:
     app.register_blueprint(auth_bp, url_prefix="/auth")
 
     from .models import Recipe
-    from flask import render_template
 
     @app.route("/")
     def home():
@@ -37,9 +41,8 @@ def create_app(test_config: dict | None = None) -> Flask:
     return app
 
 
-# Flask-Login needs this to reload a user from the session
+# Flask-Login user loader
 @login_manager.user_loader
 def load_user(user_id: str):
     from .models import User
     return User.query.get(int(user_id))
-

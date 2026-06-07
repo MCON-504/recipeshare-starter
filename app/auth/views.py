@@ -89,8 +89,9 @@ def login():
         next_url = request.args.get("next") or None
 
         # TODO: redirect to next_url if it is safe, otherwise get_recipes
-        if is_safe_url(next_url):
+        if next_url and is_safe_url(next_url):
             return redirect(next_url)
+        flash(f"Welcome back, {user.username}! You are now logged in.", "success")
         return redirect(url_for("main_bp.get_recipes"))
 
     return render_template("auth/login.html", form=form)

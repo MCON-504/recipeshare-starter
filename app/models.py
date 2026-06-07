@@ -15,6 +15,10 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(256), nullable=True)
 
     recipes = db.relationship("Recipe", back_populates="author", lazy=True)
+    reviews = db.relationship(
+        "RecipeReview",
+        back_populates="user",
+    )
 
     # ── password property (write-only) ──────────────────
     @property
@@ -50,6 +54,11 @@ class Recipe(db.Model):
 
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     author = db.relationship("User", back_populates="recipes")
+    reviews = db.relationship(
+        "RecipeReview",
+        back_populates="recipe",
+        cascade="all, delete-orphan"
+    )
 
     def to_dict(self) -> dict:
         return {
@@ -70,4 +79,20 @@ class Profile(db.Model):
 
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, unique=True)
     user = db.relationship("User", backref=db.backref("profile", uselist=False))
+
+
+class RecipeReview(db.Model):
+    __tablename__= "recipereview"
+    id = db.Column(db.Integer, primary_key=True)
+    rating = db.Column(db.Integer, nullable = False)
+    comment = db.Column(db.Text, nullable = False)
+    created_at = db.Column(db.DateTime)
+
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    recipe_id = db.Column(db.Integer, db.ForeignKey("recipes.id"), nullable=False)
+
+
+    user = db.relationship("User", back_populates = "reviews")
+    recipe = db.relationship("Recipe", back_populates="reviews")
+
 
