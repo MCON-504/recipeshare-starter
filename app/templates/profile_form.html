@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="auth-card">
+    <h1>My Profile</h1>
+    <p class="muted">Tell other users a little about your cooking style.</p>
+
+    <form method="POST">
+        {{ form.hidden_tag() }}
+
+        <div class="form-group">
+            {{ form.display_name.label }}
+            {{ form.display_name(class="form-control", placeholder="Display name") }}
+            {% for error in form.display_name.errors %}
+            <div class="field-error">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.bio.label }}
+            {{ form.bio(class="form-control", rows="4", placeholder="Short bio") }}
+            {% for error in form.bio.errors %}
+            <div class="field-error">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.favorite_cuisine.label }}
+            {{ form.favorite_cuisine(class="form-control", placeholder="Italian, Israeli, Mexican, etc.") }}
+            {% for error in form.favorite_cuisine.errors %}
+            <div class="field-error">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.years_cooking.label }}
+            {{ form.years_cooking(class="form-control", placeholder="Example: 5") }}
+            {% for error in form.years_cooking.errors %}
+            <div class="field-error">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        {{ form.submit(class="btn btn-primary btn-block") }}
+    </form>
+</section>
+{% endblock %}

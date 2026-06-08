@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="recipe-form-card">
+
+    <h1>New Recipe</h1>
+    <p class="muted">Fill in the details below and click Save.</p>
+
+    <form method="POST" action="{{ url_for('main_bp.new_recipe') }}">
+        {{ form.hidden_tag() }}
+
+        <div class="form-group">
+            {{ form.title.label }}
+            {{ form.title(class="form-control", placeholder="e.g. Tomato Soup") }}
+            {% for error in form.title.errors %}
+            <div class="field-error">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.description.label }}
+            {{ form.description(class="form-control", placeholder="A delicious soup") }}
+            {% for error in form.description.errors %}
+            <div class="field-error">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.instructions.label }}
+            {{ form.instructions(class="form-control", placeholder="At least 8 characters") }}
+            {% for error in form.instructions.errors %}
+            <div class="field-error">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.prep_time.label }}
+            {{ form.prep_time(class="form-control", placeholder="Repeat your password") }}
+            {% for error in form.prep_time.errors %}
+            <div class="field-error">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        {{ form.submit(class="btn btn-primary btn-block") }}
+    </form>
+
+        {# ---------------------------------------------------------------- #}
+        {# TODO: render each field the same way as register.html            #}
+        {#                                                                   #}
+        {# Pattern for each field:                                           #}
+        {#   <div class="form-group">                                        #}
+        {#     {{ form.FIELD.label }}                                        #}
+        {#     {{ form.FIELD(class="form-control") }}                        #}
+        {#     {% for error in form.FIELD.errors %}                          #}
+        {#       <div class="field-error">{{ error }}</div>                  #}
+        {#     {% endfor %}                                                  #}
+        {#   </div>                                                          #}
+        {#                                                                   #}
+        {# Fields to render: title, description, instructions, prep_time    #}
+        {# ---------------------------------------------------------------- #}
+
+
+    <p class="auth-switch">
+        <a href="{{ url_for('main_bp.get_recipes') }}">← Cancel</a>
+    </p>
+
+
+</section>
+
+<style>
+    .recipe-form-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        box-shadow: var(--shadow);
+        max-width: 600px;
+        margin: 3rem auto;
+        padding: 2.5rem 2.25rem;
+    }
+    .recipe-form-card h1 { font-size: 1.6rem; margin-bottom: .35rem; }
+    .recipe-form-card .muted { color: var(--muted); font-size: .92rem; margin-bottom: 1.75rem; }
+    textarea.form-control { min-height: 110px; resize: vertical; }
+</style>
+{% endblock %}

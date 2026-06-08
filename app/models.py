@@ -1,22 +1,40 @@
 from datetime import datetime, UTC
+from sqlalchemy import CheckConstraint
+from flask_login import UserMixin
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from .extensions import db
 
 
-class User(db.Model):
+class User(UserMixin, db.Model):
     __tablename__ = "users"
 
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), nullable=False, unique=True)
-    email = db.Column(db.String(120), nullable=False, unique=True)
+    id            = db.Column(db.Integer, primary_key=True)
+    username      = db.Column(db.String(80),  nullable=False, unique=True)
+    email         = db.Column(db.String(120), nullable=False, unique=True)
+    password_hash = db.Column(db.String(256), nullable=False)
 
     recipes = db.relationship("Recipe", back_populates="author", lazy=True)
 
+    # ── password property (write-only) ──────────────────
+    @property
+    def password(self):
+        raise AttributeError("password is write-only")
+
+    @password.setter
+    def password(self, raw_password: str):
+        self.password_hash = generate_password_hash(raw_password)
+
+    # ── verify_password ──────────────────────────────────
+    def verify_password(self, raw_password: str) -> bool:
+        return check_password_hash(self.password_hash, raw_password)
+
+    # ── to_dict (excludes hash for safety) ──────────────
     def to_dict(self) -> dict:
         return {
-            "id": self.id,
+            "id":       self.id,
             "username": self.username,
-            "email": self.email,
+            "email":    self.email,
         }
 
 
@@ -43,3 +61,29 @@ class Recipe(db.Model):
             "created_at": self.created_at.isoformat(),
             "user_id": self.user_id,
         }
+
+class Profile(db.Model):
+    __tablename__ = "profile"
+    id = db.Column(db.Integer, primary_key=True)
+    display_name = db.Column(db.String(80), nullable=False)
+    bio = db.Column(db.String(300))
+    favorite_cuisine = db.Column(db.String(80))
+    years_cooking = db.Column(db.Integer)
+
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, unique=True)
+    user = db.relationship("User", backref=db.backref("profile", uselist=False))
+
+class RecipeReview(db.Model):
+    __tablename__ = "reviews"
+
+    id = db.Column(db.Integer, primary_key=True)
+    rating = db.Column(db.Integer, nullable=False )
+    comment = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC), nullable=False)
+
+
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, unique=False)
+    user = db.relationship("User", backref=db.backref("reviews", lazy=True))
+
+    recipe_id = db.Column(db.Integer, db.ForeignKey("recipes.id"), nullable=False, unique=False)
+    recipe = db.relationship("Recipe", backref=db.backref("reviews", lazy=True))

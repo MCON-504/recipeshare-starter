@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="auth-card">
+    <h1>Feedback</h1>
+    <p class="muted">Use this form to practice Flask-WTF fields and validation.</p>
+
+    <form method="POST">
+        {{ form.hidden_tag() }}
+
+        <div class="form-group">
+            {{ form.name.label }}
+            {{ form.name(class="form-control", placeholder="Your name") }}
+            {% for error in form.name.errors %}
+            <div class="field-error">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.email.label }}
+            {{ form.email(class="form-control", placeholder="you@example.com") }}
+            {% for error in form.email.errors %}
+            <div class="field-error">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.topic.label }}
+            {{ form.topic(class="form-control", placeholder="What is this about?") }}
+            {% for error in form.topic.errors %}
+            <div class="field-error">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.message.label }}
+            {{ form.message(class="form-control", rows="5", placeholder="Write at least 10 characters...") }}
+            {% for error in form.message.errors %}
+            <div class="field-error">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        {{ form.submit(class="btn btn-primary btn-block") }}
+    </form>
+</section>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="auth-card">
+    <h1>Create Account</h1>
+    <p class="muted">Register so you can create and manage your own recipes.</p>
+
+    <form method="POST" action="{{ url_for('auth.register') }}">
+        {{ form.hidden_tag() }}
+
+        <div class="form-group">
+            {{ form.username.label }}
+            {{ form.username(class="form-control", placeholder="e.g. chefmaria") }}
+            {% for error in form.username.errors %}
+            <div class="field-error">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.email.label }}
+            {{ form.email(class="form-control", placeholder="you@example.com") }}
+            {% for error in form.email.errors %}
+            <div class="field-error">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.password.label }}
+            {{ form.password(class="form-control", placeholder="At least 8 characters") }}
+            {% for error in form.password.errors %}
+            <div class="field-error">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.confirm_password.label }}
+            {{ form.confirm_password(class="form-control", placeholder="Repeat your password") }}
+            {% for error in form.confirm_password.errors %}
+            <div class="field-error">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        {{ form.submit(class="btn btn-primary btn-block") }}
+    </form>
+
+    <p class="auth-switch">
+        Already have an account?
+        <a href="{{ url_for('auth.login') }}">Log in</a>
+    </p>
+</section>
+{% endblock %}

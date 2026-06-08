@@ -3,3 +3,15 @@ Flask-SQLAlchemy==3.1.1
 Flask-Migrate==4.0.7
 psycopg2-binary==2.9.10
 python-dotenv==1.0.1
+
+# Authentication
+Flask-Login==0.6.3
+Flask-Security==5.5.2
+Flask-JWT-Extended==4.7.1
+
+# Forms
+Flask-WTF==1.2.2
+WTForms==3.2.1
+
+# Testing
+pytest==8.3.5

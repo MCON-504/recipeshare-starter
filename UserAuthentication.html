@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask User Authentication — Recipe Share App</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Fraunces:ital,wght@0,300;0,600;0,800;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:        #0d1117;
+            --surface:   #161b22;
+            --surface2:  #1f2733;
+            --border:    #30363d;
+            --text:      #e6edf3;
+            --muted:     #8b949e;
+            --accent:    #f0883e;
+            --accent2:   #58a6ff;
+            --accent3:   #3fb950;
+            --danger:    #ff7b72;
+            --tag-bg:    rgba(240,136,62,.15);
+            --tag-border:rgba(240,136,62,.35);
+            --code-bg:   #0d1117;
+            --inline-code:#161b22;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 300;
+            line-height: 1.75;
+            font-size: 16px;
+        }
+
+        /* ── HEADER ─────────────────────────────────────── */
+        header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            height: 56px;
+        }
+        .breadcrumb {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .75rem;
+            color: var(--muted);
+            letter-spacing: .04em;
+        }
+        .breadcrumb span { color: var(--accent); }
+        .lesson-badge {
+            margin-left: auto;
+            background: var(--tag-bg);
+            border: 1px solid var(--tag-border);
+            color: var(--accent);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .7rem;
+            padding: .2rem .65rem;
+            border-radius: 2rem;
+            letter-spacing: .06em;
+        }
+
+        /* ── HERO ─────────────────────────────────────── */
+        .hero {
+            padding: 5rem 2rem 3.5rem;
+            max-width: 860px;
+            margin: 0 auto;
+            animation: fadeUp .6s ease both;
+        }
+        .hero-eyebrow {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .75rem;
+            color: var(--accent);
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+        .hero h1 {
+            font-family: 'Fraunces', serif;
+            font-size: clamp(2.2rem, 5vw, 3.4rem);
+            font-weight: 800;
+            line-height: 1.1;
+            color: var(--text);
+            margin-bottom: 1.25rem;
+        }
+        .hero h1 em {
+            font-style: italic;
+            color: var(--accent);
+        }
+        .hero-sub {
+            font-size: 1.05rem;
+            color: var(--muted);
+            max-width: 600px;
+            margin-bottom: 2rem;
+        }
+        .objectives-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: .75rem;
+            margin-top: 1.5rem;
+        }
+        .obj-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: .9rem 1rem;
+            display: flex;
+            align-items: flex-start;
+            gap: .65rem;
+            font-size: .87rem;
+            transition: border-color .2s;
+        }
+        .obj-card:hover { border-color: var(--accent); }
+        .obj-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: .1rem; }
+
+        /* ── LAYOUT ─────────────────────────────────────── */
+        .layout {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            max-width: 1120px;
+            margin: 0 auto;
+            gap: 0;
+            padding: 0 2rem 4rem;
+            align-items: start;
+        }
+
+        /* ── TOC ─────────────────────────────────────── */
+        .toc {
+            position: sticky;
+            top: 72px;
+            padding: 1.5rem 1.5rem 1.5rem 0;
+        }
+        .toc-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .68rem;
+            color: var(--muted);
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            margin-bottom: .75rem;
+        }
+        .toc ol { list-style: none; counter-reset: toc; }
+        .toc li { counter-increment: toc; margin-bottom: .15rem; }
+        .toc a {
+            font-size: .82rem;
+            color: var(--muted);
+            text-decoration: none;
+            display: flex;
+            gap: .5rem;
+            align-items: baseline;
+            padding: .25rem .4rem;
+            border-radius: 4px;
+            transition: color .15s, background .15s;
+        }
+        .toc a::before {
+            content: counter(toc, decimal-leading-zero);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .65rem;
+            color: var(--accent);
+            opacity: .6;
+            flex-shrink: 0;
+        }
+        .toc a:hover { color: var(--text); background: var(--surface); }
+
+        /* ── CONTENT ─────────────────────────────────────── */
+        .content { padding: 1.5rem 0; min-width: 0; }
+
+        section {
+            margin-bottom: 3.5rem;
+            animation: fadeUp .5s ease both;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            margin-bottom: 1.5rem;
+        }
+        .section-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .7rem;
+            color: var(--accent);
+            background: var(--tag-bg);
+            border: 1px solid var(--tag-border);
+            border-radius: 4px;
+            padding: .15rem .4rem;
+            flex-shrink: 0;
+        }
+        h2 {
+            font-family: 'Fraunces', serif;
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        h3 {
+            font-family: 'Fraunces', serif;
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--text);
+            margin: 2rem 0 .75rem;
+        }
+
+        p { margin-bottom: 1rem; color: #c9d1d9; }
+
+        a { color: var(--accent2); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        strong { font-weight: 500; color: var(--text); }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .82em;
+            background: var(--inline-code);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: .1em .35em;
+            color: var(--accent);
+        }
+
+        /* ── CODE BLOCKS ─────────────────────────────────────── */
+        .code-block {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 1.25rem 0;
+            font-size: .84rem;
+        }
+        .code-header {
+            background: var(--surface2);
+            border-bottom: 1px solid var(--border);
+            padding: .5rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+        .code-filename {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .72rem;
+            color: var(--muted);
+            flex: 1;
+        }
+        .code-lang {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .65rem;
+            color: var(--accent);
+            background: var(--tag-bg);
+            border: 1px solid var(--tag-border);
+            border-radius: 3px;
+            padding: .1rem .35rem;
+        }
+        .code-dots { display: flex; gap: .35rem; }
+        .code-dots span {
+            width: 10px; height: 10px; border-radius: 50%;
+            background: var(--border);
+        }
+        pre {
+            padding: 1.25rem 1.25rem;
+            overflow-x: auto;
+            line-height: 1.65;
+        }
+        pre code {
+            background: none;
+            border: none;
+            padding: 0;
+            font-size: inherit;
+            color: var(--text);
+        }
+
+        /* Syntax highlighting classes */
+        .kw  { color: #ff7b72; }   /* keywords */
+        .fn  { color: #d2a8ff; }   /* functions/decorators */
+        .st  { color: #a5d6ff; }   /* strings */
+        .cm  { color: #6e7681; font-style: italic; } /* comments */
+        .cl  { color: #ffa657; }   /* class names */
+        .nb  { color: #79c0ff; }   /* builtins / attr */
+        .op  { color: #ff7b72; }   /* operators */
+
+        /* ── CALLOUTS ─────────────────────────────────────── */
+        .callout {
+            border-left: 3px solid;
+            border-radius: 0 8px 8px 0;
+            padding: 1rem 1.25rem;
+            margin: 1.25rem 0;
+            font-size: .92rem;
+        }
+        .callout-info    { border-color: var(--accent2); background: rgba(88,166,255,.07); }
+        .callout-warning { border-color: var(--accent);  background: rgba(240,136,62,.07); }
+        .callout-success { border-color: var(--accent3); background: rgba(63,185,80,.07); }
+        .callout-danger  { border-color: var(--danger);  background: rgba(255,123,114,.07); }
+        .callout-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .72rem;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            margin-bottom: .4rem;
+            font-weight: 600;
+        }
+        .callout-info    .callout-title { color: var(--accent2); }
+        .callout-warning .callout-title { color: var(--accent); }
+        .callout-success .callout-title { color: var(--accent3); }
+        .callout-danger  .callout-title { color: var(--danger); }
+
+        /* ── DIAGRAM WRAPPERS ─────────────────────────────────────── */
+        .diagram-wrap {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 2rem 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+        }
+        .diagram-caption {
+            text-align: center;
+            font-size: .8rem;
+            color: var(--muted);
+            margin-top: .75rem;
+            font-style: italic;
+        }
+
+        /* ── PACKAGE CARDS ─────────────────────────────────────── */
+        .pkg-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin: 1.25rem 0;
+        }
+        .pkg-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.1rem 1.25rem;
+            transition: border-color .2s, transform .15s;
+        }
+        .pkg-card:hover { border-color: var(--accent2); transform: translateY(-2px); }
+        .pkg-name {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .85rem;
+            color: var(--accent2);
+            margin-bottom: .4rem;
+            font-weight: 600;
+        }
+        .pkg-desc { font-size: .85rem; color: var(--muted); }
+
+        /* ── METHOD COMPARISON TABLE ─────────────────────────────────────── */
+        .table-wrap { overflow-x: auto; margin: 1.25rem 0; }
+        table { width: 100%; border-collapse: collapse; font-size: .87rem; }
+        th {
+            background: var(--surface2);
+            color: var(--accent);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .72rem;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            padding: .65rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        td {
+            padding: .65rem 1rem;
+            border-bottom: 1px solid var(--border);
+            color: #c9d1d9;
+            vertical-align: top;
+        }
+        tr:hover td { background: var(--surface); }
+        .badge {
+            display: inline-block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .65rem;
+            padding: .15rem .45rem;
+            border-radius: 3px;
+            font-weight: 600;
+            letter-spacing: .04em;
+        }
+        .badge-green  { background: rgba(63,185,80,.2);  color: #3fb950; border:1px solid rgba(63,185,80,.3); }
+        .badge-yellow { background: rgba(240,136,62,.2); color: #f0883e; border:1px solid rgba(240,136,62,.3); }
+        .badge-red    { background: rgba(255,123,114,.2);color: #ff7b72; border:1px solid rgba(255,123,114,.3); }
+
+        /* ── STEP LIST ─────────────────────────────────────── */
+        .step-list { list-style: none; counter-reset: steps; margin: 1.25rem 0; }
+        .step-list li {
+            counter-increment: steps;
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            align-items: flex-start;
+        }
+        .step-list li::before {
+            content: counter(steps);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .72rem;
+            font-weight: 600;
+            color: var(--bg);
+            background: var(--accent);
+            border-radius: 50%;
+            width: 22px; height: 22px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            margin-top: .2rem;
+        }
+
+        /* ── DIVIDER ─────────────────────────────────────── */
+        hr.section-div {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 3rem 0;
+        }
+
+        /* ── EXPANDABLE / DETAILS ─────────────────────────────────────── */
+        details.expand {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin: 1.25rem 0;
+            overflow: hidden;
+            transition: border-color .2s;
+        }
+        details.expand[open] { border-color: var(--accent2); }
+        details.expand summary {
+            display: flex;
+            align-items: center;
+            gap: .65rem;
+            padding: .85rem 1.1rem;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .82rem;
+            color: var(--accent2);
+            font-weight: 600;
+            letter-spacing: .03em;
+            list-style: none;
+            user-select: none;
+        }
+        details.expand summary::-webkit-details-marker { display: none; }
+        details.expand summary::before {
+            content: '▶';
+            font-size: .65rem;
+            transition: transform .2s;
+            color: var(--accent2);
+            flex-shrink: 0;
+        }
+        details.expand[open] summary::before { transform: rotate(90deg); }
+        details.expand summary:hover { background: var(--surface2); }
+        .expand-body {
+            padding: 1.1rem 1.25rem;
+            border-top: 1px solid var(--border);
+        }
+        .expand-body p:last-child { margin-bottom: 0; }
+
+        /* ── ANIMATION ─────────────────────────────────────── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── RESPONSIVE ─────────────────────────────────────── */
+        @media (max-width: 720px) {
+            .layout { grid-template-columns: 1fr; padding: 0 1rem 3rem; }
+            .toc { display: none; }
+            .hero { padding: 3rem 1rem 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+    <div class="breadcrumb">Flask &rsaquo; Recipe Share App &rsaquo; <span>User Authentication</span></div>
+    <div class="lesson-badge">LESSON 08</div>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+    <div class="hero-eyebrow">Flask — Recipe Share App</div>
+    <h1>User <em>Authentication</em></h1>
+    <p class="hero-sub">
+        Secure  Recipe Share application with Flask-Login, password hashing,
+        protected routes, and a dedicated auth blueprint.
+    </p>
+    <div class="objectives-grid">
+        <div class="obj-card"><span class="obj-icon">🔐</span>Understand authentication concepts &amp; methods</div>
+        <div class="obj-card"><span class="obj-icon">🧂</span>Hash &amp; salt passwords with Werkzeug</div>
+        <div class="obj-card"><span class="obj-icon">👤</span>Extend the User model for Flask-Login</div>
+        <div class="obj-card"><span class="obj-icon">📦</span>Build register, login &amp; logout routes</div>
+        <div class="obj-card"><span class="obj-icon">🛡️</span>Protect views with <code>@login_required</code></div>
+        <div class="obj-card"><span class="obj-icon">🧪</span>Write unit tests for auth logic</div>
+    </div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="layout">
+
+    <!-- TOC -->
+    <nav class="toc">
+        <div class="toc-title">Contents</div>
+        <ol>
+            <li><a href="#s1">What is Authentication?</a></li>
+            <li><a href="#s2">Auth Methods</a></li>
+            <li><a href="#s3">Password Hashing</a></li>
+            <li><a href="#s4">Flask-Login &amp; UserMixin</a></li>
+            <li><a href="#s5">Updating the User Model</a></li>
+            <li><a href="#s6">Auth Blueprint</a></li>
+            <li><a href="#s7">Register Route</a></li>
+            <li><a href="#s8">Login &amp; Logout</a></li>
+            <li><a href="#s9">Protected Routes</a></li>
+            <li><a href="#s10">Unit Tests</a></li>
+        </ol>
+    </nav>
+
+    <!-- CONTENT -->
+    <main class="content">
+
+        <!-- ── 1. What is Authentication ── -->
+        <section id="s1">
+            <div class="section-header">
+                <span class="section-num">01</span>
+                <h2>What is User Authentication?</h2>
+            </div>
+
+            <p>
+                Most web applications need to know <strong>who</strong> is making a request before granting access to protected resources.
+                <strong>User authentication</strong> is the process of verifying a user's identity — confirming that someone is who they claim to be.
+            </p>
+            <p>
+                In our Recipe Share app, authentication lets us associate recipes with their authors, prevent anonymous edits,
+                and eventually support features like saved recipes or private notes.
+            </p>
+
+            <!-- Auth flow diagram -->
+            <div class="diagram-wrap">
+                <svg viewBox="0 0 720 140" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:720px;display:block;margin:0 auto">
+                    <defs>
+                        <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                            <polygon points="0 0, 8 3, 0 6" fill="#58a6ff"/>
+                        </marker>
+                    </defs>
+                    <!-- boxes -->
+                    <rect x="10"  y="45" width="110" height="50" rx="6" fill="#1f2733" stroke="#30363d"/>
+                    <rect x="180" y="45" width="110" height="50" rx="6" fill="#1f2733" stroke="#30363d"/>
+                    <rect x="350" y="45" width="110" height="50" rx="6" fill="#1f2733" stroke="#30363d"/>
+                    <rect x="520" y="45" width="110" height="50" rx="6" fill="#1f2733" stroke="#f0883e" stroke-width="1.5"/>
+                    <!-- labels -->
+                    <text x="65"  y="67" text-anchor="middle" fill="#c9d1d9" font-family="DM Sans,sans-serif" font-size="11">User submits</text>
+                    <text x="65"  y="82" text-anchor="middle" fill="#c9d1d9" font-family="DM Sans,sans-serif" font-size="11">credentials</text>
+                    <text x="235" y="67" text-anchor="middle" fill="#c9d1d9" font-family="DM Sans,sans-serif" font-size="11">Server hashes</text>
+                    <text x="235" y="82" text-anchor="middle" fill="#c9d1d9" font-family="DM Sans,sans-serif" font-size="11">password</text>
+                    <text x="405" y="67" text-anchor="middle" fill="#c9d1d9" font-family="DM Sans,sans-serif" font-size="11">Compare to</text>
+                    <text x="405" y="82" text-anchor="middle" fill="#c9d1d9" font-family="DM Sans,sans-serif" font-size="11">stored hash</text>
+                    <text x="575" y="67" text-anchor="middle" fill="#f0883e" font-family="DM Sans,sans-serif" font-size="11" font-weight="500">Grant / Deny</text>
+                    <text x="575" y="82" text-anchor="middle" fill="#f0883e" font-family="DM Sans,sans-serif" font-size="11" font-weight="500">Access</text>
+                    <!-- arrows -->
+                    <line x1="121" y1="70" x2="178" y2="70" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#arr)"/>
+                    <line x1="291" y1="70" x2="348" y2="70" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#arr)"/>
+                    <line x1="461" y1="70" x2="518" y2="70" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#arr)"/>
+                </svg>
+                <p class="diagram-caption">High-level login flow</p>
+            </div>
+
+            <div class="callout callout-info">
+                <div class="callout-title">📌 Key Concept</div>
+                Authentication answers <em>"Who are you?"</em> — it's separate from <strong>authorization</strong>,
+                which answers <em>"What are you allowed to do?"</em> We'll tackle authorization (roles &amp; permissions) in a later lesson.
+            </div>
+        </section>
+
+        <hr class="section-div">
+
+        <!-- ── 2. Auth Methods ── -->
+        <section id="s2">
+            <div class="section-header">
+                <span class="section-num">02</span>
+                <h2>Authentication Methods</h2>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>How it works</th>
+                        <th>Security</th>
+                        <th>Used in this lesson?</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td><strong>Username &amp; Password</strong></td>
+                        <td>User provides credentials; server checks a hashed password in the database.</td>
+                        <td><span class="badge badge-yellow">MEDIUM</span></td>
+                        <td>✅ Yes</td>
+                    </tr>
+                    <tr>
+                        <td><strong>OAuth 2.0 / Social Login</strong></td>
+                        <td>Delegates authentication to a third party (Google, GitHub). The app receives a token confirming identity.</td>
+                        <td><span class="badge badge-green">HIGH</span></td>
+                        <td>🗓️  Future lesson</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Two-Factor Auth (2FA)</strong></td>
+                        <td>Adds a second step — a time-based one time password (TOTP) sent to a device or app after password verification.</td>
+                        <td><span class="badge badge-green">HIGH</span></td>
+                        <td>❌ Not in scope for this class</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Biometric</strong></td>
+                        <td>Fingerprint / Face ID — typically handled by the device OS and surfaced via WebAuthn in web apps.</td>
+                        <td><span class="badge badge-green">VERY HIGH</span></td>
+                        <td>❌ Not in scope for this class</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p>
+                For our Recipe Share app, we'll implement the classic username &amp; password method.
+                It's widely used and supported by Flask extensions, making it ideal for learning the fundamentals of authentication.
+            </p>
+
+            <p>We will add these packages to the <code>requirements.txt</code> to include the auth packages:</p>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <div class="code-dots"><span></span><span></span><span></span></div>
+                    <div class="code-filename">requirements.txt</div>
+                    <div class="code-lang">text</div>
+                </div>
+                <pre><code><span class="cm"># ── Core ────────────────────────────────────</span>
+Flask==3.1.0
+Flask-SQLAlchemy==3.1.1
+Flask-Migrate==4.0.7
+psycopg2-binary==2.9.10
+python-dotenv==1.0.1
+
+<span class="cm"># ── Authentication ───────────────────────────</span>
+Flask-Login==0.6.3
+Flask-Security==5.5.2
+Flask-JWT-Extended==4.7.1
+                </code></pre>
+            </div>
+
+            <h3>Flask Packages for Authentication</h3>
+            <div class="pkg-grid">
+                <div class="pkg-card">
+                    <div class="pkg-name">Flask-Login</div>
+                    <div class="pkg-desc">Session-based user management. Log in/out, remember-me cookies, and <code>@login_required</code> decorator. <strong>We use this today.</strong></div>
+                </div>
+                <div class="pkg-card">
+                    <div class="pkg-name">Flask-Security</div>
+                    <div class="pkg-desc">Builds on Flask-Login; adds role management, email confirmation, and password reset out of the box.</div>
+                </div>
+                <div class="pkg-card">
+                    <div class="pkg-name">Flask-JWT-Extended</div>
+                    <div class="pkg-desc">Stateless token auth (JWT) — ideal for REST APIs where you don't want server-side sessions.<p/> <strong>We will use this when we introduce React frontend</strong></div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="section-div">
+
+        <!-- ── 3. Password Hashing ── -->
+        <section id="s3">
+            <div class="section-header">
+                <span class="section-num">03</span>
+                <h2>Password Hashing &amp; Salting</h2>
+            </div>
+
+            <p>
+                <strong>Never store plain-text passwords.</strong> If your database is ever compromised,
+                an attacker would have every user's password instantly. Instead, we store a <strong>hash</strong> — a one-way
+                mathematical transformation of the password.
+            </p>
+
+            <!-- Hashing diagram -->
+            <div class="diagram-wrap">
+                <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:700px;display:block;margin:0 auto">
+                    <defs>
+                        <marker id="arr2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                            <polygon points="0 0, 8 3, 0 6" fill="#3fb950"/>
+                        </marker>
+                        <marker id="arr3" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                            <polygon points="0 0, 8 3, 0 6" fill="#58a6ff"/>
+                        </marker>
+                    </defs>
+
+                    <!-- Password input -->
+                    <rect x="10" y="75" width="120" height="50" rx="6" fill="#1f2733" stroke="#30363d"/>
+                    <text x="70" y="97" text-anchor="middle" fill="#8b949e" font-family="JetBrains Mono,monospace" font-size="10">password</text>
+                    <text x="70" y="113" text-anchor="middle" fill="#c9d1d9" font-family="JetBrains Mono,monospace" font-size="12" font-weight="600">p@ssw0rd!</text>
+
+                    <!-- Salt -->
+                    <rect x="10" y="145" width="120" height="40" rx="6" fill="#1f2733" stroke="#f0883e" stroke-dasharray="4 2"/>
+                    <text x="70" y="163" text-anchor="middle" fill="#f0883e" font-family="JetBrains Mono,monospace" font-size="10">random salt</text>
+                    <text x="70" y="178" text-anchor="middle" fill="#c9d1d9" font-family="JetBrains Mono,monospace" font-size="10">7f3a9b2c...</text>
+
+                    <!-- Combine arrow -->
+                    <line x1="70" y1="125" x2="70" y2="143" stroke="#f0883e" stroke-width="1.5" stroke-dasharray="3 2"/>
+                    <text x="82" y="137" fill="#f0883e" font-family="DM Sans,sans-serif" font-size="10">combine</text>
+
+                    <!-- Hash function box -->
+                    <rect x="190" y="60" width="140" height="80" rx="6" fill="#0d1117" stroke="#d2a8ff" stroke-width="1.5"/>
+                    <text x="260" y="90" text-anchor="middle" fill="#d2a8ff" font-family="JetBrains Mono,monospace" font-size="11" font-weight="600">bcrypt / pbkdf2</text>
+                    <text x="260" y="110" text-anchor="middle" fill="#8b949e" font-family="DM Sans,sans-serif" font-size="10">one-way hash</text>
+                    <text x="260" y="126" text-anchor="middle" fill="#8b949e" font-family="DM Sans,sans-serif" font-size="10">function</text>
+
+                    <!-- Arrow: pw + salt → hash fn -->
+                    <line x1="131" y1="100" x2="188" y2="100" stroke="#3fb950" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+                    <!-- Output hash -->
+                    <rect x="390" y="75" width="300" height="50" rx="6" fill="#1f2733" stroke="#3fb950"/>
+                    <text x="540" y="97" text-anchor="middle" fill="#8b949e" font-family="JetBrains Mono,monospace" font-size="10">stored hash</text>
+                    <text x="540" y="114" text-anchor="middle" fill="#3fb950" font-family="JetBrains Mono,monospace" font-size="10.5">pbkdf2:sha256$260000$7f3a9b...</text>
+
+                    <!-- Arrow: hash fn → output -->
+                    <line x1="331" y1="100" x2="388" y2="100" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#arr3)"/>
+
+                    <!-- Labels top -->
+                    <text x="70" y="20" text-anchor="middle" fill="#8b949e" font-family="DM Sans,sans-serif" font-size="11">User input</text>
+                    <text x="260" y="20" text-anchor="middle" fill="#8b949e" font-family="DM Sans,sans-serif" font-size="11">Transformation</text>
+                    <text x="540" y="20" text-anchor="middle" fill="#8b949e" font-family="DM Sans,sans-serif" font-size="11">Database stores this ↓</text>
+                    <line x1="10" y1="30" x2="130" y2="30" stroke="#30363d" stroke-width="1"/>
+                    <line x1="190" y1="30" x2="330" y2="30" stroke="#30363d" stroke-width="1"/>
+                    <line x1="390" y1="30" x2="690" y2="30" stroke="#3fb950" stroke-width="1"/>
+                </svg>
+                <p class="diagram-caption">Password + salt → one-way hash function → stored hash. Salting ensures two users with the same password get different hashes.</p>
+            </div>
+
+            <h3>Why Salt?</h3>
+            <p>
+                A <strong>salt</strong> is a randomly generated string added to the password <em>before</em> hashing.
+                Without salts, attackers can use <em>rainbow tables</em> — precomputed hash dictionaries — to reverse common passwords instantly.
+                Salts make every hash unique, even if two users share the same password.
+            </p>
+
+            <div class="callout callout-success">
+                <div class="callout-title">✅ Good News</div>
+                <strong>Werkzeug</strong> (Flask's underlying library) handles salting automatically via
+                <code>generate_password_hash()</code>. You never need to manage salts manually.
+            </div>
+
+            <details class="expand">
+                <summary>🧂 Deep Dive — What exactly is a salt?</summary>
+                <div class="expand-body">
+                    <p>
+                        A <strong>salt</strong> is a random string generated fresh for each user at the moment their password is hashed.
+                        It is combined with the password <em>before</em> the hash function runs, so two users with the same password produce
+                        completely different hashes.
+                    </p>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <div class="code-dots"><span></span><span></span><span></span></div>
+                            <div class="code-filename">conceptual example</div>
+                            <div class="code-lang">text</div>
+                        </div>
+                        <pre><code>User A  →  "hello123" + salt "7f3a9b2c"  →  hash: aabbcc...
+User B  →  "hello123" + salt "d92f1e4a"  →  hash: xxyyzz...
+                                                     ↑ completely different!</code></pre>
+                    </div>
+
+                    <h3>Why not just hash without a salt?</h3>
+                    <p>
+                        Without a salt, every user with the password <code>"hello123"</code> produces the <em>same</em> hash.
+                        An attacker who steals the database can use a <strong>rainbow table</strong> — a precomputed lookup of
+                        <code>hash → password</code> for millions of common passwords — and crack every matching account instantly.
+                    </p>
+                    <p>
+                        With a salt, the rainbow table is useless. The attacker would need to build a separate table
+                        <em>for every possible salt value</em> — computationally infeasible.
+                    </p>
+
+                    <h3>Where is the salt stored?</h3>
+                    <p>
+                        The salt lives <strong>inside the hash string itself</strong> — no separate database column needed.
+                        Werkzeug encodes everything together:
+                    </p>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <div class="code-dots"><span></span><span></span><span></span></div>
+                            <div class="code-filename">anatomy of a Werkzeug hash string</div>
+                            <div class="code-lang">text</div>
+                        </div>
+                        <pre><code>pbkdf2:sha256$260000$7f3a9b2c$a1b2c3d4e5f6...
+              ↑        ↑         ↑          ↑
+           algorithm  iterations  salt    actual hash</code></pre>
+                    </div>
+
+                    <p>
+                        When a user logs in, <code>check_password_hash()</code> reads the salt back out of that string,
+                        re-hashes the submitted password with the same salt, and compares — all automatically.
+                        You never touch the salt directly.
+                    </p>
+
+                    <div class="callout callout-warning">
+                        <div class="callout-title">⚠️ Salt ≠ Pepper</div>
+                        A <strong>pepper</strong> is a secret value (stored outside the database, e.g. in an environment variable)
+                        added on top of the salt for an extra layer of security. Werkzeug does not add a pepper automatically —
+                        that's an advanced hardening step beyond this lesson.
+                    </div>
+                </div>
+            </details>
+
+            <h3>Werkzeug Password Helpers</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <div class="code-dots"><span></span><span></span><span></span></div>
+                    <div class="code-filename">python — interactive example</div>
+                    <div class="code-lang">python</div>
+                </div>
+                <pre><code><span class="kw">from</span> werkzeug.security <span class="kw">import</span> <span class="fn">generate_password_hash</span>, <span class="fn">check_password_hash</span>
+
+<span class="cm"># Registration — hash before storing</span>
+password_hash = <span class="fn">generate_password_hash</span>(<span class="st">"p@ssw0rd!"</span>)
+<span class="nb">print</span>(password_hash)
+<span class="cm"># → 'pbkdf2:sha256:260000$7f3a9b2c...$a1b2c3...'</span>
+
+<span class="cm"># Login — verify without reversing the hash</span>
+<span class="fn">check_password_hash</span>(password_hash, <span class="st">"p@ssw0rd!"</span>)   <span class="cm"># → True</span>
+<span class="fn">check_password_hash</span>(password_hash, <span class="st">"wrongpass"</span>)   <span class="cm"># → False</span></code></pre>
+            </div>
+            <details class="expand">
+                <summary>🔬 Deep Dive — PBKDF2 vs bcrypt (what are we actually using?)</summary>
+                <div class="expand-body">
+                    <p>
+                        Definition: <strong>PBKDF2: Password-Based Key Derivation Function 2</strong>
+                        <p/>
+                        Werkzeug's <code>generate_password_hash()</code> defaults to <strong>PBKDF2:sha256</strong>.
+                        You may hear about <strong>bcrypt</strong> as an alternative. Here's how they compare:
+                    </p>
+
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                            <tr>
+                                <th></th>
+                                <th>PBKDF2 (what we use)</th>
+                                <th>bcrypt</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td><strong>Algorithm</strong></td>
+                                <td>Applies SHA-256 thousands of times ("key stretching")</td>
+                                <td>Uses the Blowfish cipher with a tunable cost factor</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Work factor</strong></td>
+                                <td>260,000 iterations (Werkzeug default)</td>
+                                <td>Cost factor 10–12 (each +1 doubles the work)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>GPU resistance</strong></td>
+                                <td><span class="badge badge-yellow">MODERATE</span> — can be parallelised on GPUs</td>
+                                <td><span class="badge badge-green">BETTER</span> — memory-hard, harder to parallelise</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Standard</strong></td>
+                                <td>NIST / FIPS approved ✅</td>
+                                <td>Not FIPS approved</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Password length limit</strong></td>
+                                <td>None</td>
+                                <td>72 bytes max</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Dependencies</strong></td>
+                                <td>None — built into Python's stdlib</td>
+                                <td>Requires <code>bcrypt</code> package</td>
+                            </tr>
+                            <tr>
+                                <td><strong>In this project?</strong></td>
+                                <td>✅ Yes — via <code>werkzeug.security</code></td>
+                                <td>❌ No</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="callout callout-info">
+                        <div class="callout-title">📌 Bottom Line</div>
+                        For a student project, <strong>PBKDF2:sha256 is perfectly fine</strong> — it's battle-tested and requires zero extra packages.
+                        In a production app handling sensitive data you'd evaluate <strong>bcrypt</strong> or the even stronger
+                        <strong>Argon2</strong> (winner of the 2015 Password Hashing Competition).
+                        The key insight is the same for all three: they are deliberately <em>slow</em> so that brute-force attacks take impractically long.
+                    </div>
+                </div>
+            </details>
+        </section>
+        <!-- ── 4. Flask-Login & UserMixin ── -->
+        <section id="s4">
+            <div class="section-header">
+                <span class="section-num">04</span>
+                <h2>Flask-Login &amp; UserMixin</h2>
+            </div>
+
+            <p>
+                <strong>Flask-Login</strong> manages user sessions after authentication. It tracks who is logged in,
+                handles the <code>current_user</code> proxy, and provides the <code>@login_required</code> decorator.
+                To use it, our <code>User</code> model must implement <strong>three properties</strong> and <strong>one method</strong>:
+            </p>
+
+            <!-- Flask-Login contract diagram -->
+            <div class="diagram-wrap">
+                <svg viewBox="0 0 660 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:660px;display:block;margin:0 auto">
+                    <!-- User class box -->
+                    <rect x="10" y="20" width="200" height="160" rx="8" fill="#1f2733" stroke="#30363d"/>
+                    <rect x="10" y="20" width="200" height="32" rx="8" fill="#0d1117" stroke="#30363d"/>
+                    <text x="110" y="41" text-anchor="middle" fill="#ffa657" font-family="JetBrains Mono,monospace" font-size="12" font-weight="600">User(db.Model)</text>
+                    <text x="24" y="72"  fill="#c9d1d9" font-family="JetBrains Mono,monospace" font-size="10.5">id</text>
+                    <text x="24" y="90"  fill="#c9d1d9" font-family="JetBrains Mono,monospace" font-size="10.5">username</text>
+                    <text x="24" y="108" fill="#c9d1d9" font-family="JetBrains Mono,monospace" font-size="10.5">email</text>
+                    <text x="24" y="126" fill="#3fb950" font-family="JetBrains Mono,monospace" font-size="10.5">password_hash  ← new</text>
+
+                    <!-- UserMixin box -->
+                    <rect x="290" y="20" width="200" height="160" rx="8" fill="#1f2733" stroke="#d2a8ff" stroke-width="1.5"/>
+                    <rect x="290" y="20" width="200" height="32" rx="8" fill="#0d1117" stroke="#d2a8ff" stroke-width="1.5"/>
+                    <text x="390" y="41" text-anchor="middle" fill="#d2a8ff" font-family="JetBrains Mono,monospace" font-size="12" font-weight="600">UserMixin</text>
+                    <text x="304" y="72"  fill="#8b949e" font-family="JetBrains Mono,monospace" font-size="10">.is_authenticated → True</text>
+                    <text x="304" y="90"  fill="#8b949e" font-family="JetBrains Mono,monospace" font-size="10">.is_active        → True</text>
+                    <text x="304" y="108" fill="#8b949e" font-family="JetBrains Mono,monospace" font-size="10">.is_anonymous     → False</text>
+                    <text x="304" y="126" fill="#8b949e" font-family="JetBrains Mono,monospace" font-size="10">.get_id()         → str(id)</text>
+                    <!-- dotted line showing inheritance -->
+                    <line x1="212" y1="100" x2="288" y2="100" stroke="#d2a8ff" stroke-width="1.5" stroke-dasharray="5 3"/>
+                    <text x="250" y="92"  text-anchor="middle" fill="#d2a8ff" font-family="DM Sans,sans-serif" font-size="10">inherits</text>
+
+                    <!-- Flask-Login box -->
+                    <rect x="560" y="55" width="90" height="90" rx="8" fill="#0d1117" stroke="#58a6ff" stroke-width="1.5"/>
+                    <text x="605" y="90"  text-anchor="middle" fill="#58a6ff" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600">Flask</text>
+                    <text x="605" y="105" text-anchor="middle" fill="#58a6ff" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600">Login</text>
+                    <text x="605" y="123" text-anchor="middle" fill="#8b949e" font-family="DM Sans,sans-serif" font-size="9">extension</text>
+                    <line x1="491" y1="100" x2="558" y2="100" stroke="#58a6ff" stroke-width="1.5" stroke-dasharray="4 3"/>
+                    <text x="524" y="92"  text-anchor="middle" fill="#58a6ff" font-family="DM Sans,sans-serif" font-size="9">uses</text>
+                </svg>
+                <p class="diagram-caption">Inheriting <code>UserMixin</code> provides the four required Flask-Login properties with sensible defaults.</p>
+            </div>
+
+            <h3>Setting Up Flask-Login in the App Factory</h3>
+            <p>The project separates extension instances into <code>extensions.py</code> so they can be imported
+            anywhere without circular imports, then initialised inside the app factory.</p>
+            <div class="code-block">
+                <div class="code-header">
+                    <div class="code-dots"><span></span><span></span><span></span></div>
+                    <div class="code-filename">app/extensions.py</div>
+                    <div class="code-lang">python</div>
+                </div>
+                <pre><code><span class="kw">from</span> flask_sqlalchemy <span class="kw">import</span> <span class="cl">SQLAlchemy</span>
+<span class="kw">from</span> flask_migrate <span class="kw">import</span> <span class="cl">Migrate</span>
+<span class="kw">from</span> flask_login <span class="kw">import</span> <span class="cl">LoginManager</span>
+
+<span class="cm"># Extensions are created here and initialized in the app factory.</span>
+db            = <span class="cl">SQLAlchemy</span>()
+migrate       = <span class="cl">Migrate</span>()
+login_manager = <span class="cl">LoginManager</span>()</code></pre>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <div class="code-dots"><span></span><span></span><span></span></div>
+                    <div class="code-filename">app/__init__.py</div>
+                    <div class="code-lang">python</div>
+                </div>
+                <pre><code><span class="kw">from</span> flask <span class="kw">import</span> <span class="cl">Flask</span>
+
+<span class="kw">from</span> .config <span class="kw">import</span> <span class="cl">Config</span>
+<span class="kw">from</span> .extensions <span class="kw">import</span> db, migrate, login_manager
+
+
+<span class="kw">def</span> <span class="fn">create_app</span>(test_config: dict | <span class="kw">None</span> = <span class="kw">None</span>) -> <span class="cl">Flask</span>:
+    app = <span class="cl">Flask</span>(__name__)
+    app.config.<span class="fn">from_object</span>(<span class="cl">Config</span>)
+
+    <span class="cm"># Allow tests to override config before extensions bind</span>
+    <span class="kw">if</span> test_config:
+        app.config.<span class="fn">update</span>(test_config)
+
+    db.<span class="fn">init_app</span>(app)
+    migrate.<span class="fn">init_app</span>(app, db)
+
+    <span class="cm"># Flask-Login setup</span>
+    login_manager.login_view = <span class="st">"auth.login"</span>
+    login_manager.login_message_category = <span class="st">"warning"</span>
+    login_manager.<span class="fn">init_app</span>(app)
+
+    <span class="kw">from</span> .routes <span class="kw">import</span> main_bp
+    app.<span class="fn">register_blueprint</span>(main_bp, url_prefix="/api")
+
+    <span class="kw">from</span> .auth <span class="kw">import</span> auth_bp
+    app.<span class="fn">register_blueprint</span>(auth_bp, url_prefix=<span class="st">"/auth"</span>)
+
+    <span class="kw">return</span> app
+
+
+<span class="cm"># Flask-Login needs this to reload a user from the session</span>
+<span class="fn">@login_manager.user_loader</span>
+<span class="kw">def</span> <span class="fn">load_user</span>(user_id: str):
+    <span class="kw">from</span> .models <span class="kw">import</span> <span class="cl">User</span>
+    <span class="kw">return</span> <span class="cl">User</span>.query.<span class="fn">get</span>(<span class="nb">int</span>(user_id))</code></pre>
+            </div>
+
+            <div class="callout callout-danger">
+                <div class="callout-title">🔑 Secret Key</div>
+                The <code>SECRET_KEY</code> signs the session cookie. In production, load it from an environment
+                variable — never hard-code it in source. Use <code>os.environ.get("SECRET_KEY")</code>.
+            </div>
+        </section>
+
+        <hr class="section-div">
+
+        <!-- ── 5. Updating the User Model ── -->
+        <section id="s5">
+            <div class="section-header">
+                <span class="section-num">05</span>
+                <h2>Updating the User Model</h2>
+            </div>
+
+            <p>
+                Our existing <code>User</code> model stores <code>username</code> and <code>email</code>.
+                We need to add a <code>password_hash</code> column and expose helper methods so the rest of the app
+                never interacts with raw passwords.
+            </p>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <div class="code-dots"><span></span><span></span><span></span></div>
+                    <div class="code-filename">app/models/user.py</div>
+                    <div class="code-lang">python</div>
+                </div>
+                <pre><code><span class="kw">from</span> app <span class="kw">import</span> db
+<span class="kw">from</span> werkzeug.security <span class="kw">import</span> <span class="fn">generate_password_hash</span>, <span class="fn">check_password_hash</span>
+<span class="kw">from</span> flask_login <span class="kw">import</span> <span class="cl">UserMixin</span>
+
+
+<span class="kw">class</span> <span class="cl">User</span>(<span class="cl">UserMixin</span>, db.<span class="cl">Model</span>):
+    __tablename__ = <span class="st">"users"</span>
+
+    id            = db.<span class="fn">Column</span>(db.<span class="cl">Integer</span>, primary_key=<span class="kw">True</span>)
+    username      = db.<span class="fn">Column</span>(db.<span class="cl">String</span>(80),  nullable=<span class="kw">False</span>, unique=<span class="kw">True</span>)
+    email         = db.<span class="fn">Column</span>(db.<span class="cl">String</span>(120), nullable=<span class="kw">False</span>, unique=<span class="kw">True</span>)
+    password_hash = db.<span class="fn">Column</span>(db.<span class="cl">String</span>(256), nullable=<span class="kw">False</span>)
+
+    recipes = db.<span class="fn">relationship</span>(<span class="st">"Recipe"</span>, back_populates=<span class="st">"author"</span>, lazy=<span class="kw">True</span>)
+
+    <span class="cm"># ── password property (write-only) ──────────────────</span>
+    <span class="fn">@property</span>
+    <span class="kw">def</span> <span class="fn">password</span>(<span class="nb">self</span>):
+        <span class="kw">raise</span> <span class="cl">AttributeError</span>(<span class="st">"password is write-only"</span>)
+
+    <span class="fn">@password.setter</span>
+    <span class="kw">def</span> <span class="fn">password</span>(<span class="nb">self</span>, raw_password: str):
+        <span class="nb">self</span>.password_hash = <span class="fn">generate_password_hash</span>(raw_password)
+
+    <span class="cm"># ── verify_password ──────────────────────────────────</span>
+    <span class="kw">def</span> <span class="fn">verify_password</span>(<span class="nb">self</span>, raw_password: str) -> bool:
+        <span class="kw">return</span> <span class="fn">check_password_hash</span>(<span class="nb">self</span>.password_hash, raw_password)
+
+    <span class="cm"># ── to_dict (excludes hash for safety) ──────────────</span>
+    <span class="kw">def</span> <span class="fn">to_dict</span>(<span class="nb">self</span>) -> dict:
+        <span class="kw">return</span> {
+            <span class="st">"id"</span>:       <span class="nb">self</span>.id,
+            <span class="st">"username"</span>: <span class="nb">self</span>.username,
+            <span class="st">"email"</span>:    <span class="nb">self</span>.email,
+        }</code></pre>
+            </div>
+
+            <div class="callout callout-warning">
+                <div class="callout-title">⚠️ Write-Only Pattern</div>
+                Raising <code>AttributeError</code> on the <code>password</code> getter is intentional.
+                It prevents accidental exposure of the hash and makes it clear that <code>user.password</code>
+                is an <em>input</em> slot, not something you can read back.
+            </div>
+
+            <h3>Generate &amp; Apply the Migration</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <div class="code-dots"><span></span><span></span><span></span></div>
+                    <div class="code-filename">terminal</div>
+                    <div class="code-lang">bash</div>
+                </div>
+                <pre><code><span class="cm"># Create the migration</span>
+flask db migrate -m <span class="st">"add password_hash to users"</span>
+
+<span class="cm"># Review the generated file in migrations/versions/...</span>
+<span class="cm"># then apply it</span>
+flask db upgrade</code></pre>
+            </div>
+        </section>
+
+        <hr class="section-div">
+
+        <!-- ── 6. Auth Blueprint ── -->
+        <section id="s6">
+            <div class="section-header">
+                <span class="section-num">06</span>
+                <h2>Auth Blueprint Structure</h2>
+            </div>
+
+            <p>
+                We'll keep all authentication routes in a dedicated <strong>auth blueprint</strong>, following the same
+                pattern as our existing <code>main</code> blueprint for recipes.
+            </p>
+
+            <!-- File tree -->
+            <div class="diagram-wrap" style="padding:1.25rem 1.5rem">
+                <svg viewBox="0 0 480 220" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:480px;display:block;margin:0 auto">
+                    <text x="10" y="22" fill="#c9d1d9" font-family="JetBrains Mono,monospace" font-size="12">app/</text>
+                    <text x="28" y="46" fill="#c9d1d9" font-family="JetBrains Mono,monospace" font-size="12">├── __init__.py</text>
+                    <text x="28" y="66" fill="#c9d1d9" font-family="JetBrains Mono,monospace" font-size="12">├── models/</text>
+                    <text x="48" y="86" fill="#c9d1d9" font-family="JetBrains Mono,monospace" font-size="12">│   └── user.py</text>
+                    <text x="28" y="106" fill="#c9d1d9" font-family="JetBrains Mono,monospace" font-size="12">├── main/</text>
+                    <text x="48" y="126" fill="#c9d1d9" font-family="JetBrains Mono,monospace" font-size="12">│   └── views.py</text>
+                    <text x="28" y="148" fill="#3fb950" font-family="JetBrains Mono,monospace" font-size="12" font-weight="600">└── auth/               ← new</text>
+                    <text x="48" y="168" fill="#3fb950" font-family="JetBrains Mono,monospace" font-size="12">    ├── __init__.py</text>
+                    <text x="48" y="188" fill="#3fb950" font-family="JetBrains Mono,monospace" font-size="12">    └── views.py</text>
+                </svg>
+                <p class="diagram-caption">Project structure after adding the auth blueprint</p>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <div class="code-dots"><span></span><span></span><span></span></div>
+                    <div class="code-filename">app/auth/__init__.py</div>
+                    <div class="code-lang">python</div>
+                </div>
+                <pre><code><span class="kw">from</span> flask <span class="kw">import</span> <span class="cl">Blueprint</span>
+
+auth_bp = <span class="cl">Blueprint</span>(<span class="st">"auth"</span>, __name__)</code></pre>
+            </div>
+        </section>
+
+        <hr class="section-div">
+
+        <!-- ── 7. Register ── -->
+        <section id="s7">
+            <div class="section-header">
+                <span class="section-num">07</span>
+                <h2>Registration Route</h2>
+            </div>
+
+            <p>
+                The registration endpoint accepts a JSON body, validates that the username and email are not already taken,
+                hashes the password, and persists the new user.
+            </p>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <div class="code-dots"><span></span><span></span><span></span></div>
+                    <div class="code-filename">app/auth/views.py  — register</div>
+                    <div class="code-lang">python</div>
+                </div>
+                <pre><code><span class="kw">from</span> flask <span class="kw">import</span> request, jsonify
+<span class="kw">from</span> app <span class="kw">import</span> db
+<span class="kw">from</span> app.auth <span class="kw">import</span> auth_bp
+<span class="kw">from</span> app.models.user <span class="kw">import</span> <span class="cl">User</span>
+
+
+<span class="fn">@auth_bp.route</span>(<span class="st">"/register"</span>, methods=[<span class="st">"POST"</span>])
+<span class="kw">def</span> <span class="fn">register</span>():
+    data = request.<span class="fn">get_json</span>()
+    username = data.<span class="fn">get</span>(<span class="st">"username"</span>, <span class="st">""</span>).<span class="fn">strip</span>()
+    email    = data.<span class="fn">get</span>(<span class="st">"email"</span>, <span class="st">""</span>).<span class="fn">strip</span>().<span class="fn">lower</span>()
+    password = data.<span class="fn">get</span>(<span class="st">"password"</span>, <span class="st">""</span>)
+
+    <span class="cm"># Basic validation</span>
+    <span class="kw">if not</span> username <span class="kw">or not</span> email <span class="kw">or not</span> password:
+        <span class="kw">return</span> <span class="fn">jsonify</span>({<span class="st">"error"</span>: <span class="st">"username, email and password are required"</span>}), 400
+
+    <span class="kw">if</span> <span class="nb">len</span>(password) < 8:
+        <span class="kw">return</span> <span class="fn">jsonify</span>({<span class="st">"error"</span>: <span class="st">"password must be at least 8 characters"</span>}), 400
+
+    <span class="cm"># Check for duplicates</span>
+    <span class="kw">if</span> <span class="cl">User</span>.query.<span class="fn">filter_by</span>(username=username).<span class="fn">first</span>():
+        <span class="kw">return</span> <span class="fn">jsonify</span>({<span class="st">"error"</span>: <span class="st">"username already taken"</span>}), 409
+
+    <span class="kw">if</span> <span class="cl">User</span>.query.<span class="fn">filter_by</span>(email=email).<span class="fn">first</span>():
+        <span class="kw">return</span> <span class="fn">jsonify</span>({<span class="st">"error"</span>: <span class="st">"email already registered"</span>}), 409
+
+    <span class="cm"># Create user — password property calls generate_password_hash internally</span>
+    user = <span class="cl">User</span>(username=username, email=email)
+    user.password = password          <span class="cm"># uses the setter we defined</span>
+    db.session.<span class="fn">add</span>(user)
+    db.session.<span class="fn">commit</span>()
+
+    <span class="kw">return</span> <span class="fn">jsonify</span>(user.<span class="fn">to_dict</span>()), 201</code></pre>
+            </div>
+        </section>
+
+        <hr class="section-div">
+
+        <!-- ── 8. Login & Logout ── -->
+        <section id="s8">
+            <div class="section-header">
+                <span class="section-num">08</span>
+                <h2>Login &amp; Logout Routes</h2>
+            </div>
+
+            <!-- Session flow diagram -->
+            <div class="diagram-wrap">
+                <svg viewBox="0 0 680 110" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:680px;display:block;margin:0 auto">
+                    <defs>
+                        <marker id="arr4" markerWidth="7" markerHeight="6" refX="7" refY="3" orient="auto">
+                            <polygon points="0 0, 7 3, 0 6" fill="#58a6ff"/>
+                        </marker>
+                    </defs>
+                    <rect x="10"  y="30" width="110" height="50" rx="6" fill="#1f2733" stroke="#30363d"/>
+                    <rect x="185" y="30" width="130" height="50" rx="6" fill="#1f2733" stroke="#30363d"/>
+                    <rect x="380" y="30" width="140" height="50" rx="6" fill="#1f2733" stroke="#3fb950" stroke-width="1.5"/>
+                    <rect x="585" y="30" width="85"  height="50" rx="6" fill="#1f2733" stroke="#58a6ff" stroke-width="1.5"/>
+
+                    <text x="65"  y="52" text-anchor="middle" fill="#c9d1d9" font-family="DM Sans,sans-serif" font-size="11">POST /auth/login</text>
+                    <text x="65"  y="67" text-anchor="middle" fill="#8b949e" font-family="DM Sans,sans-serif" font-size="10">username + password</text>
+
+                    <text x="250" y="52" text-anchor="middle" fill="#c9d1d9" font-family="DM Sans,sans-serif" font-size="11">verify_password()</text>
+                    <text x="250" y="67" text-anchor="middle" fill="#8b949e" font-family="DM Sans,sans-serif" font-size="10">check hash in DB</text>
+
+                    <text x="450" y="52" text-anchor="middle" fill="#3fb950" font-family="DM Sans,sans-serif" font-size="11">login_user(user)</text>
+                    <text x="450" y="67" text-anchor="middle" fill="#8b949e" font-family="DM Sans,sans-serif" font-size="10">writes signed cookie</text>
+
+                    <text x="627" y="52" text-anchor="middle" fill="#58a6ff" font-family="DM Sans,sans-serif" font-size="11">200 OK</text>
+                    <text x="627" y="67" text-anchor="middle" fill="#8b949e" font-family="DM Sans,sans-serif" font-size="10">user dict</text>
+
+                    <line x1="121" y1="55" x2="183" y2="55" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#arr4)"/>
+                    <line x1="316" y1="55" x2="378" y2="55" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#arr4)"/>
+                    <line x1="521" y1="55" x2="583" y2="55" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#arr4)"/>
+                </svg>
+                <p class="diagram-caption">Login flow: credentials → password verification → session cookie → response</p>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <div class="code-dots"><span></span><span></span><span></span></div>
+                    <div class="code-filename">app/auth/views.py  — login &amp; logout</div>
+                    <div class="code-lang">python</div>
+                </div>
+                <pre><code><span class="kw">from</span> flask_login <span class="kw">import</span> <span class="fn">login_user</span>, <span class="fn">logout_user</span>, <span class="fn">login_required</span>
+
+
+<span class="fn">@auth_bp.route</span>(<span class="st">"/login"</span>, methods=[<span class="st">"POST"</span>])
+<span class="kw">def</span> <span class="fn">login</span>():
+    data     = request.<span class="fn">get_json</span>()
+    username = data.<span class="fn">get</span>(<span class="st">"username"</span>, <span class="st">""</span>)
+    password = data.<span class="fn">get</span>(<span class="st">"password"</span>, <span class="st">""</span>)
+
+    user = <span class="cl">User</span>.query.<span class="fn">filter_by</span>(username=username).<span class="fn">first</span>()
+
+    <span class="kw">if</span> user <span class="kw">is None or not</span> user.<span class="fn">verify_password</span>(password):
+        <span class="cm"># Same error for both cases — don't hint which field was wrong</span>
+        <span class="kw">return</span> <span class="fn">jsonify</span>({<span class="st">"error"</span>: <span class="st">"invalid username or password"</span>}), 401
+
+    remember = data.<span class="fn">get</span>(<span class="st">"remember_me"</span>, <span class="kw">False</span>)
+    <span class="fn">login_user</span>(user, remember=remember)
+    <span class="kw">return</span> <span class="fn">jsonify</span>(user.<span class="fn">to_dict</span>()), 200
+
+
+<span class="fn">@auth_bp.route</span>(<span class="st">"/logout"</span>, methods=[<span class="st">"POST"</span>])
+<span class="fn">@login_required</span>
+<span class="kw">def</span> <span class="fn">logout</span>():
+    <span class="fn">logout_user</span>()
+    <span class="kw">return</span> <span class="fn">jsonify</span>({<span class="st">"message"</span>: <span class="st">"logged out"</span>}), 200</code></pre>
+            </div>
+
+            <div class="callout callout-info">
+                <div class="callout-title">🔒 Security Note — Enumeration</div>
+                Always return the <strong>same error message</strong> whether the username doesn't exist or the password is wrong.
+                Separate messages let attackers enumerate valid usernames (user enumeration attack).
+            </div>
+        </section>
+
+        <hr class="section-div">
+
+        <!-- ── 9. Protected Routes ── -->
+        <section id="s9">
+            <div class="section-header">
+                <span class="section-num">09</span>
+                <h2>Protected Routes</h2>
+            </div>
+
+            <p>
+                Any route that should only be accessible to logged-in users gets the <code>@login_required</code>
+                decorator. If an unauthenticated request arrives, Flask-Login redirects to the
+                <code>login_view</code> we configured (<code>"auth.login"</code>).
+            </p>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <div class="code-dots"><span></span><span></span><span></span></div>
+                    <div class="code-filename">app/main/views.py  — protected recipe endpoints</div>
+                    <div class="code-lang">python</div>
+                </div>
+                <pre><code><span class="kw">from</span> flask <span class="kw">import</span> request, jsonify
+<span class="kw">from</span> flask_login <span class="kw">import</span> <span class="fn">login_required</span>, current_user
+<span class="kw">from</span> app <span class="kw">import</span> db
+<span class="kw">from</span> app.main <span class="kw">import</span> main_bp
+<span class="kw">from</span> app.models.recipe <span class="kw">import</span> <span class="cl">Recipe</span>
+
+
+<span class="cm"># ── Public: anyone can browse recipes ──────────────────</span>
+<span class="fn">@main_bp.route</span>(<span class="st">"/recipes"</span>, methods=[<span class="st">"GET"</span>])
+<span class="kw">def</span> <span class="fn">list_recipes</span>():
+    recipes = <span class="cl">Recipe</span>.query.<span class="fn">all</span>()
+    <span class="kw">return</span> <span class="fn">jsonify</span>([r.<span class="fn">to_dict</span>() <span class="kw">for</span> r <span class="kw">in</span> recipes])
+
+
+<span class="cm"># ── Protected: only authenticated users can create ─────</span>
+<span class="fn">@main_bp.route</span>(<span class="st">"/recipes"</span>, methods=[<span class="st">"POST"</span>])
+<span class="fn">@login_required</span>
+<span class="kw">def</span> <span class="fn">create_recipe</span>():
+    data = request.<span class="fn">get_json</span>()
+    recipe = <span class="cl">Recipe</span>(
+        title=data[<span class="st">"title"</span>],
+        body=data[<span class="st">"body"</span>],
+        author=current_user,   <span class="cm"># Flask-Login provides this proxy</span>
+    )
+    db.session.<span class="fn">add</span>(recipe)
+    db.session.<span class="fn">commit</span>()
+    <span class="kw">return</span> <span class="fn">jsonify</span>(recipe.<span class="fn">to_dict</span>()), 201
+
+
+<span class="cm"># ── Protected: only the author can delete their recipe ──</span>
+<span class="fn">@main_bp.route</span>(<span class="st">"/recipes/&lt;int:recipe_id&gt;"</span>, methods=[<span class="st">"DELETE"</span>])
+<span class="fn">@login_required</span>
+<span class="kw">def</span> <span class="fn">delete_recipe</span>(recipe_id):
+    recipe = <span class="cl">Recipe</span>.query.<span class="fn">get_or_404</span>(recipe_id)
+    <span class="kw">if</span> recipe.author_id != current_user.id:
+        <span class="kw">return</span> <span class="fn">jsonify</span>({<span class="st">"error"</span>: <span class="st">"forbidden"</span>}), 403
+    db.session.<span class="fn">delete</span>(recipe)
+    db.session.<span class="fn">commit</span>()
+    <span class="kw">return</span> <span class="st">""</span>, 204</code></pre>
+            </div>
+        </section>
+
+        <hr class="section-div">
+
+        <!-- ── 10. Unit Tests ── -->
+        <section id="s10">
+            <div class="section-header">
+                <span class="section-num">10</span>
+                <h2>Unit Tests</h2>
+            </div>
+
+            <p>
+                We need tests that cover the <code>User</code> model behaviour, and the registration and login API endpoints.
+            </p>
+
+            <h3>Testing the User Model</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <div class="code-dots"><span></span><span></span><span></span></div>
+                    <div class="code-filename">tests/test_user_model.py</div>
+                    <div class="code-lang">python</div>
+                </div>
+                <pre><code><span class="kw">import</span> pytest
+<span class="kw">from</span> app.models.user <span class="kw">import</span> <span class="cl">User</span>
+
+
+<span class="kw">def</span> <span class="fn">test_password_setter_hashes</span>():
+    <span class="st">"""Setting password must store a hash, not plain text."""</span>
+    user = <span class="cl">User</span>(username=<span class="st">"alice"</span>, email=<span class="st">"alice@example.com"</span>)
+    user.password = <span class="st">"s3cret!"</span>
+    <span class="kw">assert</span> user.password_hash <span class="kw">is not</span> <span class="kw">None</span>
+    <span class="kw">assert</span> user.password_hash != <span class="st">"s3cret!"</span>
+
+
+<span class="kw">def</span> <span class="fn">test_password_getter_raises</span>():
+    <span class="st">"""Reading .password must raise AttributeError."""</span>
+    user = <span class="cl">User</span>(username=<span class="st">"bob"</span>, email=<span class="st">"bob@example.com"</span>)
+    user.password = <span class="st">"s3cret!"</span>
+    <span class="kw">with</span> pytest.<span class="fn">raises</span>(<span class="cl">AttributeError</span>):
+        _ = user.password
+
+
+<span class="kw">def</span> <span class="fn">test_verify_password_correct</span>():
+    <span class="st">"""verify_password returns True for the correct password."""</span>
+    user = <span class="cl">User</span>(username=<span class="st">"carol"</span>, email=<span class="st">"carol@example.com"</span>)
+    user.password = <span class="st">"mypassword"</span>
+    <span class="kw">assert</span> user.<span class="fn">verify_password</span>(<span class="st">"mypassword"</span>) <span class="kw">is True</span>
+
+
+<span class="kw">def</span> <span class="fn">test_verify_password_wrong</span>():
+    <span class="st">"""verify_password returns False for wrong password."""</span>
+    user = <span class="cl">User</span>(username=<span class="st">"dave"</span>, email=<span class="st">"dave@example.com"</span>)
+    user.password = <span class="st">"mypassword"</span>
+    <span class="kw">assert</span> user.<span class="fn">verify_password</span>(<span class="st">"wrongpassword"</span>) <span class="kw">is False</span>
+
+
+<span class="kw">def</span> <span class="fn">test_two_users_same_password_different_hashes</span>():
+    <span class="st">"""Salting must produce different hashes for the same password."""</span>
+    u1 = <span class="cl">User</span>(username=<span class="st">"eve"</span>,   email=<span class="st">"eve@example.com"</span>)
+    u2 = <span class="cl">User</span>(username=<span class="st">"frank"</span>, email=<span class="st">"frank@example.com"</span>)
+    u1.password = u2.password = <span class="st">"samepass"</span>
+    <span class="kw">assert</span> u1.password_hash != u2.password_hash</code></pre>
+            </div>
+
+            <h3>Testing Auth Endpoints</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <div class="code-dots"><span></span><span></span><span></span></div>
+                    <div class="code-filename">tests/test_auth_routes.py</div>
+                    <div class="code-lang">python</div>
+                </div>
+                <pre><code><span class="kw">import</span> pytest
+<span class="kw">from</span> app <span class="kw">import</span> <span class="fn">create_app</span>, db
+
+
+<span class="fn">@pytest.fixture</span>
+<span class="kw">def</span> <span class="fn">client</span>():
+    app = <span class="fn">create_app</span>()
+    app.config[<span class="st">"TESTING"</span>]              = <span class="kw">True</span>
+    app.config[<span class="st">"SQLALCHEMY_DATABASE_URI"</span>] = <span class="st">"sqlite:///:memory:"</span>
+    app.config[<span class="st">"WTF_CSRF_ENABLED"</span>]       = <span class="kw">False</span>
+
+    <span class="kw">with</span> app.<span class="fn">app_context</span>():
+        db.create_all()
+        <span class="kw">yield</span> app.<span class="fn">test_client</span>()
+        db.drop_all()
+
+
+<span class="kw">def</span> <span class="fn">register</span>(client, username=<span class="st">"alice"</span>, email=<span class="st">"alice@test.com"</span>, password=<span class="st">"s3cret!!"</span>):
+    <span class="kw">return</span> client.<span class="fn">post</span>(<span class="st">"/auth/register"</span>, json={
+        <span class="st">"username"</span>: username, <span class="st">"email"</span>: email, <span class="st">"password"</span>: password
+    })
+
+
+<span class="cm"># ── Registration ──────────────────────────────────────</span>
+
+<span class="kw">def</span> <span class="fn">test_register_success</span>(client):
+    rv = <span class="fn">register</span>(client)
+    <span class="kw">assert</span> rv.status_code == 201
+    data = rv.<span class="fn">get_json</span>()
+    <span class="kw">assert</span> data[<span class="st">"username"</span>] == <span class="st">"alice"</span>
+    <span class="kw">assert</span> <span class="st">"password_hash"</span> <span class="kw">not in</span> data   <span class="cm"># never leak the hash</span>
+
+
+<span class="kw">def</span> <span class="fn">test_register_duplicate_username</span>(client):
+    <span class="fn">register</span>(client)
+    rv = <span class="fn">register</span>(client, email=<span class="st">"other@test.com"</span>)
+    <span class="kw">assert</span> rv.status_code == 409
+
+
+<span class="kw">def</span> <span class="fn">test_register_short_password</span>(client):
+    rv = <span class="fn">register</span>(client, password=<span class="st">"short"</span>)
+    <span class="kw">assert</span> rv.status_code == 400
+
+
+<span class="cm"># ── Login ─────────────────────────────────────────────</span>
+
+<span class="kw">def</span> <span class="fn">test_login_success</span>(client):
+    <span class="fn">register</span>(client)
+    rv = client.<span class="fn">post</span>(<span class="st">"/auth/login"</span>, json={
+        <span class="st">"username"</span>: <span class="st">"alice"</span>, <span class="st">"password"</span>: <span class="st">"s3cret!!"</span>
+    })
+    <span class="kw">assert</span> rv.status_code == 200
+
+
+<span class="kw">def</span> <span class="fn">test_login_wrong_password</span>(client):
+    <span class="fn">register</span>(client)
+    rv = client.<span class="fn">post</span>(<span class="st">"/auth/login"</span>, json={
+        <span class="st">"username"</span>: <span class="st">"alice"</span>, <span class="st">"password"</span>: <span class="st">"badpass"</span>
+    })
+    <span class="kw">assert</span> rv.status_code == 401
+
+
+<span class="kw">def</span> <span class="fn">test_login_unknown_user</span>(client):
+    rv = client.<span class="fn">post</span>(<span class="st">"/auth/login"</span>, json={
+        <span class="st">"username"</span>: <span class="st">"nobody"</span>, <span class="st">"password"</span>: <span class="st">"whatever"</span>
+    })
+    <span class="kw">assert</span> rv.status_code == 401
+
+
+<span class="cm"># ── Protected route ───────────────────────────────────</span>
+
+<span class="kw">def</span> <span class="fn">test_protected_route_requires_login</span>(client):
+    rv = client.<span class="fn">post</span>(<span class="st">"/recipes"</span>, json={<span class="st">"title"</span>: <span class="st">"X"</span>, <span class="st">"body"</span>: <span class="st">"Y"</span>})
+    <span class="kw">assert</span> rv.status_code <span class="kw">in</span> (401, 302)  <span class="cm"># redirect or 401</span></code></pre>
+            </div>
+
+            <div class="callout callout-success">
+                <div class="callout-title">▶ Run the Tests</div>
+                <code>pytest tests/ -v --tb=short</code>
+            </div>
+
+            <h3>Best Practices Checklist</h3>
+            <ul class="step-list">
+                <li>Store passwords as hashes — never plain text.</li>
+                <li>Use <code>generate_password_hash</code> / <code>check_password_hash</code> from Werkzeug — don't roll your own.</li>
+                <li>Enforce a minimum password length (≥ 8 characters) on the server side.</li>
+                <li>Return identical errors for bad username vs bad password to prevent enumeration.</li>
+                <li>Load <code>SECRET_KEY</code> from an environment variable in production.</li>
+                <li>Use HTTPS in production to protect the session cookie in transit.</li>
+                <li>Consider adding account lockout after repeated failed logins to thwart brute force.</li>
+            </ul>
+        </section>
+
+    </main><!-- /.content -->
+</div><!-- /.layout -->
+
+</body>
+</html>

@@ -1,17 +1,45 @@
 from flask import Flask
 
 from .config import Config
-from .extensions import db, migrate
+from .extensions import db, migrate, login_manager
 
 
-def create_app() -> Flask:
+def create_app(test_config: dict | None = None) -> Flask:
     app = Flask(__name__)
     app.config.from_object(Config)
+
+    # Allow tests (or other callers) to override config before extensions bind
+    if test_config:
+        app.config.update(test_config)
 
     db.init_app(app)
     migrate.init_app(app, db)
 
-    from .routes import main
-    app.register_blueprint(main)
+    # Flask-Login setup
+    login_manager.login_view = "auth.login"
+    login_manager.login_message_category = "warning"
+    login_manager.init_app(app)
+
+    from .routes import main_bp
+    app.register_blueprint(main_bp, url_prefix="/api")
+
+    from .auth import auth_bp
+    app.register_blueprint(auth_bp, url_prefix="/auth")
+
+    from .models import Recipe
+    from flask import render_template
+
+    @app.route("/")
+    def home():
+        recipes = Recipe.query.order_by(Recipe.created_at.desc()).all()
+        return render_template("home.html", recipes=recipes)
 
     return app
+
+
+# Flask-Login needs this to reload a user from the session
+@login_manager.user_loader
+def load_user(user_id: str):
+    from .models import User
+    return User.query.get(int(user_id))
+
